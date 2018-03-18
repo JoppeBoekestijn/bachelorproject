@@ -1,3 +1,4 @@
+#matplotlib inline
 import matplotlib as mpl
 
 mpl.use('TkAgg')
@@ -19,7 +20,10 @@ def read_and_decode(filename_queue):
     image = tf.decode_raw(features['train/encoded'], tf.float32)
     label = tf.cast(features['train/class/label'], tf.int32)
 
-    image = tf.reshape(image, [250, 250, 3])
+    image = tf.reshape(image, [25, 25, 3])
+
+    # images, labels = tf.train.shuffle_batch([image, label], batch_size=10, capacity=30, num_threads=1,
+    #                                         min_after_dequeue=10)
 
     return image, label
 
@@ -29,6 +33,31 @@ def printing_tfrecords(filenames):
         result = tf.train.Example.FromString(example)
         print(result)
 
+
+# def plot_images(images, labels):
+#
+
+
+def convolutional_neural_network():
+    # Convolutional layer 1
+    filter_size1 = 5
+    num_filters1 = 16
+
+    # Convolutional layer 2
+    filter_size2 = 5
+    num_filters2 = 36
+
+    # Fully-connected layer
+    fc_size = 128
+
+    # Data Dimensions
+    img_size = 250
+    img_size_flat = 250*250
+    img_shape = (img_size, img_size)
+    num_channels = 3
+
+    # Number of labels
+    num_classes = 10
 
 def main():
     sess = tf.Session()
@@ -42,11 +71,22 @@ def main():
     filename_queue = tf.train.string_input_producer(filenames)
     image, label = read_and_decode(filename_queue)
 
+    print(image[0].eval(session=sess))
+    img, lbl = sess.run([image, label])
+    img = img.astype(np.uint8)
+    plt.imshow(img)
+
+    plt.show()
+
+    sess.close()
+
 
 if __name__ == '__main__':
     main()
 
-# images, labels = tf.train.shuffle_batch([image, label], batch_size=1, capacity=30, num_threads=1, min_after_dequeue=10)
+
+# images, labels = tf.train.shuffle_batch([image, label]
+# , batch_size=1, capacity=30, num_threads=1, min_after_dequeue=10)
 
 # # Initialize all global and local variables
 # init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
