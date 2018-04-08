@@ -7,7 +7,6 @@ import tensorflow as tf
 import numpy as np
 import glob
 from PIL import Image
-import io
 
 # Global variables
 # Convolutional layer 1
@@ -226,7 +225,7 @@ def main():
         # image = tf.decode_raw(features['train/encoded'], tf.uint8)
         filename = features['image/filename']
         image = tf.image.decode_jpeg(features['image/encoded'], channels=3)
-        image = tf.image.convert_image_dtype(image, dtype=tf.float32)
+        image = (tf.image.convert_image_dtype(image, dtype=tf.float32) * 255)
         label = tf.cast(features['image/class/label'], tf.int32)
         image = tf.reshape(image, [250, 250, 3])
 
@@ -254,7 +253,7 @@ def main():
             # print(img.shape)
             # print(img)
             img = img.astype(np.uint8)
-            img = img[0, :, :, :]
+            #img = img[0, :, :, :]
             print(img.shape)
 
             for j in range(1):
