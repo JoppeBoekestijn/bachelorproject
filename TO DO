@@ -1,0 +1,11 @@
+TO DO:
+DATASET:
+	- Move validation data into train dataset, load in both the validation
+	data and the train data, with only 10 classes
+
+
+WRITE DOWN ARCHITECTURE CHOICES:
+	- Why and which activation function? (ReLu)
+	- What function to normalize? (softmax)
+	- What cost function? (cross entropy)
+	- What optimizer? (AdamOptimizer)
