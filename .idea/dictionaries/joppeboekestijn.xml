@@ -3,7 +3,12 @@
     <words>
       <w>conv</w>
       <w>convolutional</w>
+      <w>dataset</w>
+      <w>filenames</w>
       <w>labeltext</w>
+      <w>pred</w>
+      <w>softmax</w>
+      <w>tfrecords</w>
     </words>
   </dictionary>
 </component>
