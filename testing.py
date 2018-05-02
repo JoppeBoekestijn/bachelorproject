@@ -145,7 +145,10 @@ def flatten_layer(layer):
     layer_shape = layer.get_shape()
 
     # Number of features is: img_size * img_width * num_channels
+    # num_featerino = 16 * 16 * 36
+    # print("num_featerinos: {}".format(num_featerino))
     num_features = layer_shape[1:4].num_elements()
+    # print("num_features: {}".format(num_features))
 
     # Reshape the layer
     layer_flat = tf.reshape(layer, [-1, num_features])
@@ -170,7 +173,7 @@ def read_and_decode(serialized):
     # image = tf.cast(image, tf.float32)
 
     # The labels numbered from 1 to 10 representing the different classes
-    label = features['image/class/label']
+    label = features['image/class/label'] - 1
     # print('Label shape: {}'.format(label))
     # Names of the classes in the dataset
     # labelText = features['image/class/text']
@@ -282,6 +285,8 @@ def input_fn(train, batch_size=64, buffer_size=10000):
     iterator = dataset.make_one_shot_iterator()
 
     images_batch, labels_batch = iterator.get_next()
+    print("images_batch shape: {}".format(images_batch))
+    print("labels_batch shape: {}".format(labels_batch))
 
     return images_batch, labels_batch
 
@@ -458,16 +463,31 @@ def cnn_model(features, labels, mode):
                              use_relu=False)
     print("layer_fc2: {}".format(layer_fc2.shape))
 
-    # # Normalize prediction using softmax
-    # y_pred = tf.nn.softmax(layer_fc2)
-    #
-    # # Predicted class is index with largest number
-    # y_pred_cls = tf.argmax(y_pred, axis=1)
-    logits = tf.layers.dense(inputs=layer_fc2, units=2)
+    # Normalize prediction using softmax
+    y_pred = tf.nn.softmax(layer_fc2)
+
+    # Predicted class is index with largest number
+    y_pred_cls = tf.argmax(y_pred, axis=1)
+
+    # Transpose axis of the labels
+
+    # labels = tf.transpose(labels, perm=[1, 0])
+    print("labels transpose shape: {}".format(labels.shape))
+
+    # Calculate the overall loss
+    cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=layer_fc2,
+                                                                   labels=labels)
+    loss = tf.reduce_mean(cross_entropy)
+    #logits = tf.layers.dense(inputs=layer_fc2, units=2)
+
+    # predictions = {
+    #     "classes": tf.argmax(logits, axis=1),
+    #     "probabilities": tf.nn.softmax(logits, name="softmax_tensor")
+    # }
 
     predictions = {
-        "classes": tf.argmax(logits, axis=1),
-        "probabilities": tf.nn.softmax(logits, name="softmax_tensor")
+        "classes": y_pred_cls,
+        "probabilities": tf.nn.softmax(layer_fc2, name="softmax_tensor")
     }
 
     if mode == tf.estimator.ModeKeys.PREDICT:
@@ -479,7 +499,7 @@ def cnn_model(features, labels, mode):
     # loss = tf.losses.softmax_cross_entropy(onehot_labels=onehot_labels, logits=logits)
     # cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=layer_fc2,
     #                                                            labels=y_true_cls)
-    loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels, logits=layer_fc2)
+    # loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels, logits=layer_fc2)
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         optimizer = tf.train.AdamOptimizer(learning_rate=1e-4)
