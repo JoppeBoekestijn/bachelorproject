@@ -12,6 +12,7 @@ import numpy as np
 import glob
 import time
 from datetime import timedelta
+tf.logging.set_verbosity(tf.logging.INFO)
 
 # Datapath
 data_path = 'dataset_tropic'
@@ -32,7 +33,7 @@ fc_size = 128
 # Data Dimensions
 img_size = 64
 img_size_flat = img_size * img_size
-num_channels = 1
+num_channels = 3
 img_shape = [img_size, img_size, num_channels]
 num_classes = 10
 test_batch_size = 256
@@ -159,7 +160,8 @@ def read_and_decode(serialized):
     :return:
     """
     features = {'image/encoded': tf.FixedLenFeature([], tf.string),
-                'image/class/text': tf.FixedLenFeature([], tf.string)}
+                'image/class/text': tf.FixedLenFeature([], tf.string),
+                'image/class/label': tf.FixedLenFeature([], tf.int64)}
 
     features = tf.parse_single_example(serialized, features=features)
 
@@ -167,19 +169,25 @@ def read_and_decode(serialized):
     # image = tf.decode_raw(image_raw, tf.uint8)
     # image = tf.cast(image, tf.float32)
 
-    label = features['image/class/text']
+    # The labels numbered from 1 to 10 representing the different classes
+    label = features['image/class/label']
+    # print('Label shape: {}'.format(label))
+    # Names of the classes in the dataset
+    # labelText = features['image/class/text']
 
-    # image = tf.image.decode_jpeg(features['image/encoded'], channels=num_channels)
-    image = tf.decode_raw(features['image/encoded'], tf.float32)
-    print("image type: {}".format(image.shape))
-    print("image type: {}".format(image))
+    image = tf.image.decode_and_crop_jpeg(
+        contents=features['image/encoded'],
+        channels=num_channels,
+        crop_window=[0, 0, img_size, img_size])
+    # image = tf.decode_raw(features['image/encoded'], tf.float32)
+    # print("image type: {}".format(image.shape))
     # image = tf.cast(image, tf.float32)
-    # image = (tf.image.convert_image_dtype(image, dtype=tf.float32)) * 255
+    image = (tf.image.convert_image_dtype(image, dtype=tf.float32)) * 255
 
     # Resize image to (64, 64, 3)
-    # image = tf.image.resize_image_with_crop_or_pad(image, img_size, img_size)
-    print("read_and_decode image shape1: {}".format(image.shape))
-    print("read_and_decode image1: {}".format(image))
+    #image = tf.image.resize_image_with_crop_or_pad(image, img_size, img_size)
+    # print("read_and_decode image shape1: {}".format(image.shape))
+    # print("read_and_decode image1: {}".format(image))
     # image = flatten_layer(image)
     # print("read_and_decode image shape2: {}".format(image.shape))
     # print("read_and_decode image2: {}".format(image))
@@ -227,6 +235,8 @@ def plot_images():
     """
     image, label = inputs(10, num_epochs=None)
 
+    sess = tf.Session()
+
     with sess.as_default():
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
@@ -246,7 +256,7 @@ def plot_images():
         coord.join(threads)
 
 
-def input_model(train, batch_size=32, buffer_size=2048):
+def input_fn(train, batch_size=64, buffer_size=10000):
     """
 
     :param train:
@@ -257,7 +267,7 @@ def input_model(train, batch_size=32, buffer_size=2048):
     dataset = tf.data.TFRecordDataset(filenames=filenames)
 
     dataset = dataset.map(read_and_decode)
-    print("dataset: {}".format(dataset))
+    # print("dataset: {}".format(dataset))
 
     if train:
         dataset = dataset.shuffle(buffer_size=buffer_size)
@@ -273,12 +283,7 @@ def input_model(train, batch_size=32, buffer_size=2048):
 
     images_batch, labels_batch = iterator.get_next()
 
-    # return images_batch, labels_batch
     return images_batch, labels_batch
-    # images_dict = {'image': images_batch}
-    # labels_dict = labels_batch
-    #
-    # return images_dict, labels_dict
 
 
 def train_input_model():
@@ -286,7 +291,7 @@ def train_input_model():
 
     :return:
     """
-    return input_model(train=True)
+    return input_fn(train=True)
 
 
 def test_input_model():
@@ -294,202 +299,240 @@ def test_input_model():
 
     :return:
     """
-    return input_model(train=False)
+    return input_fn(train=False)
 
 
-def optimize(num_iterations):
-    """
-
-    :param num_iterations:
-    """
-    global total_iterations
-
-    start_time = time.time()
-
-    # filename_queue = tf.train.string_input_producer(filenames, num_epochs=None)
-    # reader = tf.TFRecordReader()
-    # _, serialized = reader.read(filename_queue)
-
-    for i in range(total_iterations,
-                   total_iterations + num_iterations):
-
-        print("ollah")
-        images_batch, labels_batch = train_input_model()
-        # images, labels = read_and_decode(serialized)
-        # images_batch, labels_batch = train_input_model()
-        print("Images batch shape: {}".format(images_batch))
-        print("Labels batch shape: {}".format(labels_batch))
-        # print("Images shape: {}".format(images.shape))
-        #images_x = tf.reshape(images, [num_classes, img_size_flat])
-        # images, labels = sess.run([images_batch, labels_batch])
-        # print("Images shape: {}".format(images))
-        # print("Labels shape: {}".format(labels))
-        feed_dict_train = {x: images_batch,
-                           y_true: labels_batch}
-
-        sess.run(optimizer, feed_dict=feed_dict_train)
-        print("ello")
-
-        if i % 100 == 0:
-            acc = sess.run(accuracy, feed_dict=feed_dict_train)
-
-            msg = "Optimization Iteration: {0:>3}, Training Accuracy {1:>6.1%}"
-
-            print(msg.format(i + 1, acc))
-
-    total_iterations += num_iterations
-
-    end_time = time.time()
-
-    time_dif = end_time - start_time
-
-    print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
-
-
-def print_test_accuracy():
-    """
-    Print the accuracy on the test data
-    """
-    num_images = 0
-    dataset = tf.data.TFRecordDataset(filenames=filenames)
-    for fn in filenames:
-        for record in tf.python_io.tf_record_iterator(fn):
-            num_images += 1
-
-    print(num_images)
-    cls_pred = np.zeros(shape=num_images, dtype=np.int)
-
-    i = 0
-    while i < num_images:
-        j = min(i + test_batch_size, num_images)
-        iterator = dataset.make_one_shot_iterator()
-
-        images_batch, labeltext_batch = iterator.get_next()
-
-        feed_dict_train = {x: images_batch,
-                           y_true: labeltext_batch}
-
-        cls_pred[i:j] = sess.run(y_pred_cls, feed_dict=feed_dict_train)
-
-        i = j
-
-    cls_true = labeltext_batch
-
-    correct = (cls_pred == cls_true)
-
-    correct_sum = correct.sum()
-
-    acc = float(correct_sum) / num_images
-
-    msg = "Accuracy on Test-Set: {0:.1%} ({1} / {2})"
-    print(msg.format(acc, correct_sum, num_images))
-
-
-# Placeholder variable for input images, shape is set to [None, img_size_flat],
-# which means that it may hold an arbitrary number of images
-x = tf.placeholder(tf.float32, shape=[None, img_size_flat * num_channels], name='x')
-print("x placeholder: {}".format(x.shape))
-
-
-# Reshape placeholder x such that it can be input to convolutional layer,
-# which expects a 4-dimensional tensor
-x_image = tf.reshape(x, [-1, img_size, img_size, num_channels])
-print("x_image: {}".format(x_image.shape))
-
-# Placeholder variable for the true labels associated with the images
-# that were input to placeholder x. Shape is [None, num_classes] which
-# means that it may hold an arbitrary number of labels and each label is
-# a vector of length num_classes
-y_true = tf.placeholder(tf.float32, shape=[None, num_classes], name='y_true')
-print("y_true label: {}".format(y_true.shape))
-
-# initialize variable for class, using the position of the max value (argmax)
-y_true_cls = tf.argmax(y_true, axis=1)
-
-# Initialize first convolutional layer
-layer_conv1, weights_conv1 = new_conv_layer(input=x_image,
-                                            num_input_channels=num_channels,
-                                            filter_size=filter_size1,
-                                            num_filters=num_filters1,
-                                            use_pooling=True)
-# print(layer_conv1)
-# print(layer_conv1.shape)
-
-# Initialize second convolutional layer
-layer_conv2, weights_conv2 = new_conv_layer(input=layer_conv1,
-                                            num_input_channels=num_filters1,
-                                            filter_size=filter_size2,
-                                            num_filters=num_filters2,
-                                            use_pooling=True)
-# print(layer_conv2)
-# print(layer_conv2.shape)
-
-layer_flat, num_features = flatten_layer(layer_conv2)
-# print(layer_flat.shape)
-# print(num_features)
-print(layer_flat.shape)
-
-# Fully-connected layer
-layer_fc1 = new_fc_layer(input=layer_flat,
-                         num_inputs=num_features,
-                         num_outputs=fc_size,
-                         use_relu=True)
-# print(layer_fc1.shape)
-
-# Second fully-connected layer
-layer_fc2 = new_fc_layer(input=layer_fc1,
-                         num_inputs=fc_size,
-                         num_outputs=num_classes,
-                         use_relu=False)
-# print(layer_fc2.shape)
-
-# Normalize prediction using softmax
-y_pred = tf.nn.softmax(layer_fc2)
-
-# Predicted class is index with largest number
-y_pred_cls = tf.argmax(y_pred, axis=1)
-
-# Cost function to be optimized, calculates softmax internally,
-# so we must use layer_fc2 instead of y_pred
-cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=layer_fc2,
-                                                           labels=y_true)
-
-# We want to have the average cost value instead of per each
-# image classifications
-cost = tf.reduce_mean(cross_entropy)
-
-# Optimization method, use AdamOptimizer which is an advanced form
-# of gradient descent.
-optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
-
-correct_prediction = tf.equal(y_pred_cls, y_true_cls)
-
-accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-
-sess = tf.Session()
-init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
-sess.run(init_op)
-
-# Function to plot one image
-# plot_images()
-
-optimize(num_iterations=1)
-print_test_accuracy()
-
-
-
-
-
-# def main():
+# def optimize(num_iterations):
 #     """
-#     Main function to run convolutional neural network
+#
+#     :param num_iterations:
 #     """
-#     # Function to plot one image
-#     plot_images()
+#     global total_iterations
 #
-#     optimize(num_iterations=1)
-#     # print_test_accuracy()
+#     start_time = time.time()
 #
+#     # filename_queue = tf.train.string_input_producer(filenames, num_epochs=None)
+#     # reader = tf.TFRecordReader()
+#     # _, serialized = reader.read(filename_queue)
 #
-# if __name__ == '__main__':
-#     main()
+#     for i in range(total_iterations,
+#                    total_iterations + num_iterations):
+#
+#         print("ollah")
+#         images_batch, labels_batch = train_input_model()
+#         # images, labels = read_and_decode(serialized)
+#         # images_batch, labels_batch = train_input_model()
+#         print("Images batch shape: {}".format(images_batch))
+#         print("Labels batch shape: {}".format(labels_batch))
+#         # print("Images shape: {}".format(images.shape))
+#         #images_x = tf.reshape(images, [num_classes, img_size_flat])
+#         # images, labels = sess.run([images_batch, labels_batch])
+#         # print("Images shape: {}".format(images))
+#         # print("Labels shape: {}".format(labels))
+#         feed_dict_train = {x: images_batch,
+#                            y_true: labels_batch}
+#
+#         sess.run(optimizer, feed_dict=feed_dict_train)
+#         print("ello")
+#
+#         if i % 100 == 0:
+#             acc = sess.run(accuracy, feed_dict=feed_dict_train)
+#
+#             msg = "Optimization Iteration: {0:>3}, Training Accuracy {1:>6.1%}"
+#
+#             print(msg.format(i + 1, acc))
+#
+#     total_iterations += num_iterations
+#
+#     end_time = time.time()
+#
+#     time_dif = end_time - start_time
+#
+#     print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
+
+
+# def print_test_accuracy():
+#     """
+#     Print the accuracy on the test data
+#     """
+#     num_images = 0
+#     dataset = tf.data.TFRecordDataset(filenames=filenames)
+#     for fn in filenames:
+#         for record in tf.python_io.tf_record_iterator(fn):
+#             num_images += 1
+#
+#     print(num_images)
+#     cls_pred = np.zeros(shape=num_images, dtype=np.int)
+#
+#     i = 0
+#     while i < num_images:
+#         j = min(i + test_batch_size, num_images)
+#         iterator = dataset.make_one_shot_iterator()
+#
+#         images_batch, labeltext_batch = iterator.get_next()
+#
+#         feed_dict_train = {x: images_batch,
+#                            y_true: labeltext_batch}
+#
+#         cls_pred[i:j] = sess.run(y_pred_cls, feed_dict=feed_dict_train)
+#
+#         i = j
+#
+#     cls_true = labeltext_batch
+#
+#     correct = (cls_pred == cls_true)
+#
+#     correct_sum = correct.sum()
+#
+#     acc = float(correct_sum) / num_images
+#
+#     msg = "Accuracy on Test-Set: {0:.1%} ({1} / {2})"
+#     print(msg.format(acc, correct_sum, num_images))
+
+
+def cnn_model(features, labels, mode):
+    # Placeholder variable for input images, shape is set to [None, img_size_flat],
+    # which means that it may hold an arbitrary number of images
+
+    # x = tf.placeholder(tf.float32, shape=[None, img_size_flat * num_channels], name='x')
+
+    print("features shape: {}".format(features.shape))
+    print("labels shape: {}".format(labels.shape))
+
+    # Reshape placeholder x such that it can be input to convolutional layer,
+    # which expects a 4-dimensional tensor
+
+    # x_image = tf.reshape(x, [-1, img_size, img_size, num_channels])
+
+    # print("x_image: {}".format(x_image.shape))
+
+    # Placeholder variable for the true labels associated with the images
+    # that were input to placeholder x. Shape is [None, num_classes] which
+    # means that it may hold an arbitrary number of labels and each label is
+    # a vector of length num_classes
+
+    # y_true = tf.placeholder(tf.float32, shape=[None, num_classes], name='y_true')
+
+    # print("y_true label: {}".format(y_true.shape))
+
+    # initialize variable for class, using the position of the max value (argmax)
+    # print("label shape: {}".format(labels))
+    # y_true_cls = tf.argmax(labels, axis=1)
+    # print("label shape: {}".format(labels))
+
+    # Initialize first convolutional layer
+    layer_conv1, weights_conv1 = new_conv_layer(input=features,
+                                                num_input_channels=num_channels,
+                                                filter_size=filter_size1,
+                                                num_filters=num_filters1,
+                                                use_pooling=True)
+    print("layer_conv1: {}".format(layer_conv1))
+    # print(layer_conv1.shape)
+
+    # Initialize second convolutional layer
+    layer_conv2, weights_conv2 = new_conv_layer(input=layer_conv1,
+                                                num_input_channels=num_filters1,
+                                                filter_size=filter_size2,
+                                                num_filters=num_filters2,
+                                                use_pooling=True)
+    # print(layer_conv2)
+    # print(layer_conv2.shape)
+    print("layer_conv2: {}".format(layer_conv2))
+
+    layer_flat, num_features = flatten_layer(layer_conv2)
+    print("layer_flat: {}".format(layer_flat.shape))
+    # print(num_features)
+    # print(layer_flat.shape)
+
+    # Fully-connected layer
+    layer_fc1 = new_fc_layer(input=layer_flat,
+                             num_inputs=num_features,
+                             num_outputs=fc_size,
+                             use_relu=True)
+    print("layer_fc1: {}".format(layer_fc1.shape))
+
+    # Second fully-connected layer
+    layer_fc2 = new_fc_layer(input=layer_fc1,
+                             num_inputs=fc_size,
+                             num_outputs=num_classes,
+                             use_relu=False)
+    print("layer_fc2: {}".format(layer_fc2.shape))
+
+    # # Normalize prediction using softmax
+    # y_pred = tf.nn.softmax(layer_fc2)
+    #
+    # # Predicted class is index with largest number
+    # y_pred_cls = tf.argmax(y_pred, axis=1)
+    logits = tf.layers.dense(inputs=layer_fc2, units=2)
+
+    predictions = {
+        "classes": tf.argmax(logits, axis=1),
+        "probabilities": tf.nn.softmax(logits, name="softmax_tensor")
+    }
+
+    if mode == tf.estimator.ModeKeys.PREDICT:
+        return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
+
+    # Cost function to be optimized, calculates softmax internally,
+    # # so we must use layer_fc2 instead of y_pred
+    # onehot_labels = tf.one_hot(indices=tf.cast(labels, tf.int32), depth=2)
+    # loss = tf.losses.softmax_cross_entropy(onehot_labels=onehot_labels, logits=logits)
+    # cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=layer_fc2,
+    #                                                            labels=y_true_cls)
+    loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels, logits=layer_fc2)
+
+    if mode == tf.estimator.ModeKeys.TRAIN:
+        optimizer = tf.train.AdamOptimizer(learning_rate=1e-4)
+        train_op = optimizer.minimize(
+            loss=loss,
+            global_step=tf.train.get_global_step())
+        return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)
+
+    eval_metric_ops = {
+        "accuracy": tf.metrics.accuracy(
+            labels=labels, predictions=predictions["classes"])}
+    return tf.estimator.EstimatorSpec(
+        mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
+
+
+    # We want to have the average cost value instead of per each
+    # image classifications
+    # cost = tf.reduce_mean(cross_entropy)
+    #
+    # # Optimization method, use AdamOptimizer which is an advanced form
+    # # of gradient descent.
+    # tf.train.AdamOptimizer(learning_rate=1e-4)
+    #
+    # correct_prediction = tf.equal(y_pred_cls, y_true_cls)
+    #
+    # accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+    #
+    # sess = tf.Session()
+    # init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+    # sess.run(init_op)
+
+
+def main():
+    """
+    Main function to run convolutional neural network
+    """
+    # Function to plot one image
+    # plot_images()
+
+    # optimize(num_iterations=1)
+    # print_test_accuracy()
+    classifier = tf.estimator.Estimator(model_fn=cnn_model)
+
+    tensors_to_log = {"probabilities": "softmax_tensor"}
+    logging_hook = tf.train.LoggingTensorHook(
+        tensors=tensors_to_log, every_n_iter=50)
+
+    classifier.train(input_fn=lambda: train_input_model(), steps=1000, hooks=[logging_hook])
+
+    evaluation = classifier.evaluate(input_fn=lambda: test_input_model())
+
+    print(evaluation)
+
+
+if __name__ == '__main__':
+    main()
