@@ -6,6 +6,7 @@
       <w>dataset</w>
       <w>filenames</w>
       <w>labeltext</w>
+      <w>onehot</w>
       <w>pred</w>
       <w>softmax</w>
       <w>tfrecords</w>

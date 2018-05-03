@@ -32,7 +32,7 @@ num_filters2 = 36
 fc_size = 128
 
 # Data Dimensions
-img_size = 64
+img_size = 32
 img_size_flat = img_size * img_size
 num_channels = 3
 img_shape = [img_size, img_size, num_channels]
@@ -168,9 +168,36 @@ def read_and_decode(serialized):
         channels=num_channels,
         crop_window=[0, 0, img_size, img_size])
 
-    image = (tf.image.convert_image_dtype(image, dtype=tf.float32)) * 255
+    image = (tf.image.convert_image_dtype(image, dtype=tf.float32))
 
     return image, label
+
+
+def read_and_decode_preprocess(serialized):
+    """
+
+    :param serialized:
+    :return:
+    """
+    features = {'image/encoded': tf.FixedLenFeature([], tf.string),
+                'image/class/text': tf.FixedLenFeature([], tf.string),
+                'image/class/label': tf.FixedLenFeature([], tf.int64)}
+
+    features = tf.parse_single_example(serialized, features=features)
+
+    # The labels numbered from 1 to 10 representing the different classes
+    label = features['image/class/label'] - 1
+
+    image = tf.image.decode_and_crop_jpeg(
+        contents=features['image/encoded'],
+        channels=num_channels,
+        crop_window=[0, 0, img_size, img_size])
+
+    flipped_image = tf.image.random_flip_left_right(image)
+
+    flipped_image = (tf.image.convert_image_dtype(image, dtype=tf.float32))
+
+    return flipped_image, label
 
 
 def inputs(batch_size, num_epochs):
@@ -245,10 +272,14 @@ def input_fn(train, batch_size=64, buffer_size=10000):
     """
     if train:
         dataset = tf.data.TFRecordDataset(filenames=train_files)
+        # dataset_flipped = tf.data.TFRecordDataset(filenames=train_files)
     else:
         dataset = tf.data.TFRecordDataset(filenames=evaluate_files)
+        # dataset_flipped = tf.data.TFRecordDataset(filenames=evaluate_files)
 
     dataset = dataset.map(read_and_decode)
+    # dataset_flipped = dataset_flipped.map(read_and_decode_preprocess)
+    # dataset.concatenate(dataset_flipped)
 
     if train:
         dataset = dataset.shuffle(buffer_size=buffer_size)
@@ -281,6 +312,76 @@ def test_input_model():
     :return:
     """
     return input_fn(train=False)
+
+
+def cnn_model_test(features, labels, mode):
+    # Convolutional Layer #1
+    conv1 = tf.layers.conv2d(
+        inputs=features,
+        filters=32,
+        kernel_size=[5, 5],
+        padding="same",
+        activation=tf.nn.relu)
+    print("layer_conv1: {}".format(conv1))
+
+    # Pooling Layer #1
+    pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
+    print("pool1: {}".format(pool1))
+
+    # Convolutional Layer #2 and Pooling Layer #2
+    conv2 = tf.layers.conv2d(
+        inputs=pool1,
+        filters=64,
+        kernel_size=[5, 5],
+        padding="same",
+        activation=tf.nn.relu)
+    print("layer_conv2: {}".format(conv2))
+    pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
+    print("pool2: {}".format(pool2))
+
+    # Dense Layer
+    pool2_flat = tf.reshape(pool2, [-1, 8 * 8 * 64])
+    print("pool2_flat: {}".format(pool2_flat))
+    dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
+    print("dense: {}".format(dense))
+    dropout = tf.layers.dropout(
+        inputs=dense, rate=0.4, training=mode == tf.estimator.ModeKeys.TRAIN)
+    print("dropout: {}".format(dropout))
+
+    # Logits Layer
+    logits = tf.layers.dense(inputs=dropout, units=10)
+    print("logits: {}".format(logits))
+
+    predictions = {
+        # Generate predictions (for PREDICT and EVAL mode)
+        "classes": tf.argmax(input=logits, axis=1),
+        # Add `softmax_tensor` to the graph. It is used for PREDICT and by the
+        # `logging_hook`.
+        "probabilities": tf.nn.softmax(logits, name="softmax_tensor")
+    }
+
+    if mode == tf.estimator.ModeKeys.PREDICT:
+        return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
+
+    # Calculate Loss (for both TRAIN and EVAL modes)
+    onehot_labels = tf.one_hot(indices=tf.cast(labels, tf.int32), depth=10)
+    loss = tf.losses.softmax_cross_entropy(
+        onehot_labels=onehot_labels, logits=logits)
+
+    # Configure the Training Op (for TRAIN mode)
+    if mode == tf.estimator.ModeKeys.TRAIN:
+        optimizer = tf.train.AdamOptimizer(learning_rate=0.001)
+        train_op = optimizer.minimize(
+            loss=loss,
+            global_step=tf.train.get_global_step())
+        return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)
+
+    # Add evaluation metrics (for EVAL mode)
+    eval_metric_ops = {
+        "accuracy": tf.metrics.accuracy(
+            labels=labels, predictions=predictions["classes"])}
+    return tf.estimator.EstimatorSpec(
+        mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
 
 def cnn_model(features, labels, mode):
@@ -327,7 +428,7 @@ def cnn_model(features, labels, mode):
 
     # Calculate the overall loss
     cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=layer_fc2,
-                                                                   labels=labels)
+                                                          labels=labels)
     loss = tf.reduce_mean(cross_entropy)
 
     predictions = {
@@ -335,8 +436,8 @@ def cnn_model(features, labels, mode):
         "probabilities": tf.nn.softmax(layer_fc2, name="softmax_tensor")
     }
 
-    if mode == tf.estimator.ModeKeys.PREDICT:
-        return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
+    # if mode == tf.estimator.ModeKeys.PREDICT:
+        # return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         optimizer = tf.train.AdamOptimizer(learning_rate=1e-4)
@@ -359,13 +460,13 @@ def main():
     # Function to plot one image
     # plot_images()
 
-    classifier = tf.estimator.Estimator(model_fn=cnn_model)
+    classifier = tf.estimator.Estimator(model_fn=cnn_model_test)
 
     tensors_to_log = {"probabilities": "softmax_tensor"}
     logging_hook = tf.train.LoggingTensorHook(
-        tensors=tensors_to_log, every_n_iter=50)
+        tensors=tensors_to_log, every_n_iter=100)
 
-    classifier.train(input_fn=lambda: train_input_model(), steps=2000, hooks=[logging_hook])
+    classifier.train(input_fn=lambda: train_input_model(), steps=1500, hooks=[logging_hook])
 
     evaluation = classifier.evaluate(input_fn=lambda: test_input_model())
 
