@@ -1,0 +1,19 @@
+NOTES:
+	- Softmax normalizes the estimates that comes from the fully-connected layer
+	- Argmax returns the index of the highest element in vector
+	- Cross entropy matches the real labels with the predicted ones, if they are equal cross entropy is equal to zero
+		- Uses logits, with softmax added
+		- You want to have the cross entropy for all images combined so you take the reduce_mean
+	- AdamOptimizer is an advanced form of Gradient Descent
+
+TO DO:
+DATASET:
+	- Move validation data into train dataset, load in both the validation
+	data and the train data, with only 10 classes
+
+
+WRITE DOWN ARCHITECTURE CHOICES:
+	- Why and which activation function? (ReLu)
+	- What function to normalize? (softmax)
+	- What cost function? (cross entropy)
+	- What optimizer? (AdamOptimizer)
