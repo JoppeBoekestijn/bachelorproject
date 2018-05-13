@@ -4,3 +4,7 @@ data
 tensorflow_input_image_by_tfrecord-master
 venv
 dataset_tropic
+venv1
+checkpoints
+MNIST
+
