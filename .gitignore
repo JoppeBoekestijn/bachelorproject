@@ -1,10 +1,10 @@
-01_Simple_Linear_Model.py
-02_Convolutional_Neural_Network.py
-data
-tensorflow_input_image_by_tfrecord-master
-venv
-dataset_tropic
-venv1
-checkpoints
-MNIST
+/01_Simple_Linear_Model.py
+/02_Convolutional_Neural_Network.py
+/data
+/tensorflow_input_image_by_tfrecord-master
+/venv
+/dataset_tropic
+/venv1
+/checkpoints
+/MNIST
 
