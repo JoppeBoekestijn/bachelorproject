@@ -3,7 +3,6 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
-import tensorlayer as tl
 from googlenet import google_net
 
 import tflearn
@@ -58,8 +57,6 @@ def alex_net(img_aug):
     else:
         network = input_data(shape=[None, img_size, img_size, num_channels],
                              name='input')
-
-    layers.transformer()
     network = conv_2d(network, 96, 11, strides=4, activation='relu', regularizer='L2')
     network = max_pool_2d(network, 3, strides=2)
     network = local_response_normalization(network)
@@ -199,9 +196,9 @@ def main():
     """
     img_aug = data_augmentation(index=2)
 
-    network = cnn_net(img_aug=img_aug)
+    # network = cnn_net(img_aug=img_aug)
     # network = alex_net(img_aug=img_aug)
-    # network = google_net(img_aug=img_aug)
+    network = google_net(img_aug=img_aug)
     # network = res_net_1(img_aug=img_aug)
     # network = res_net_2(img_aug=img_aug)
 
