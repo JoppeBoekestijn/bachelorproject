@@ -12,8 +12,6 @@ from tflearn.layers.conv import conv_2d, max_pool_2d
 from tflearn.layers.normalization import local_response_normalization
 from tflearn.layers.estimator import regression
 
-from spatial_transformer import transformer
-
 tf.logging.set_verbosity(tf.logging.INFO)
 
 # Global variables
