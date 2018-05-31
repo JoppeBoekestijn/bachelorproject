@@ -13,3 +13,5 @@
 /model_alexnet-800.index
 /model_alexnet-800.meta
 /.idea/workspace.xml
+/models
+/saved_models
