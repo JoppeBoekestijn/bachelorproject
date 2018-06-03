@@ -17,7 +17,7 @@
     <SUITE FILE_PATH="coverage/Tutorial$demo4_tropic_resnet.coverage" NAME="demo4_tropic_resnet Coverage Results" MODIFIED="1527061802189" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/bachelorproject$flowerdataset.coverage" NAME="flowerdataset Coverage Results" MODIFIED="1526475580982" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Tutorial$02_Convolutional_Neural_Network__1_.coverage" NAME="02_Convolutional_Neural_Network Coverage Results" MODIFIED="1525086130879" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$USER_HOME$/Documents/Studie/BachelorProject/TensorFlow-Tutorials" />
-    <SUITE FILE_PATH="coverage/Tutorial$neuralnetwork.coverage" NAME="neuralnetwork Coverage Results" MODIFIED="1528017775386" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Tutorial$neuralnetwork.coverage" NAME="neuralnetwork Coverage Results" MODIFIED="1528018949136" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Tutorial$Runpython.coverage" NAME="Runpython Coverage Results" MODIFIED="1519224064046" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
     <SUITE FILE_PATH="coverage/Tutorial$s2754215.coverage" NAME="s2754215 Coverage Results" MODIFIED="1526816947382" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Tutorial$testing.coverage" NAME="testing Coverage Results" MODIFIED="1525342509310" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
@@ -34,8 +34,8 @@
             <file leaf-file-name="demo4_tropic_resnet.py" pinned="false" current-in-tab="true">
               <entry file="file://$PROJECT_DIR$/demo4_tropic_resnet.py">
                 <provider selected="true" editor-type-id="text-editor">
-                  <state relative-caret-position="271">
-                    <caret line="385" column="12" lean-forward="false" selection-start-line="385" selection-start-column="4" selection-end-line="385" selection-end-column="12" />
+                  <state relative-caret-position="-3739">
+                    <caret line="125" column="41" lean-forward="true" selection-start-line="125" selection-start-column="41" selection-end-line="125" selection-end-column="41" />
                     <folding>
                       <element signature="e#241#278#0" expanded="true" />
                     </folding>
@@ -65,8 +65,8 @@
       <file leaf-file-name="neuralnetwork.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/neuralnetwork.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="261">
-              <caret line="173" column="22" lean-forward="false" selection-start-line="173" selection-start-column="22" selection-end-line="173" selection-end-column="22" />
+            <state relative-caret-position="276">
+              <caret line="199" column="50" lean-forward="true" selection-start-line="199" selection-start-column="50" selection-end-line="199" selection-end-column="50" />
               <folding>
                 <element signature="e#0#38#0" expanded="true" />
               </folding>
@@ -117,7 +117,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>&quot;</find>
       <find>softmax</find>
       <find>train_input_model</find>
       <find>model_fn</find>
@@ -147,6 +146,7 @@
       <find>input_shape</find>
       <find>dataset_name</find>
       <find>next</find>
+      <find>subtract_pixel_mean</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -605,8 +605,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/demo4_tropic_resnet.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="271">
-          <caret line="385" column="12" lean-forward="false" selection-start-line="385" selection-start-column="4" selection-end-line="385" selection-end-column="12" />
+        <state relative-caret-position="-3739">
+          <caret line="125" column="41" lean-forward="true" selection-start-line="125" selection-start-column="41" selection-end-line="125" selection-end-column="41" />
           <folding>
             <element signature="e#241#278#0" expanded="true" />
           </folding>
@@ -615,8 +615,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/neuralnetwork.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="261">
-          <caret line="173" column="22" lean-forward="false" selection-start-line="173" selection-start-column="22" selection-end-line="173" selection-end-column="22" />
+        <state relative-caret-position="276">
+          <caret line="199" column="50" lean-forward="true" selection-start-line="199" selection-start-column="50" selection-end-line="199" selection-end-column="50" />
           <folding>
             <element signature="e#0#38#0" expanded="true" />
           </folding>

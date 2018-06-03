@@ -7,7 +7,7 @@ import keras
 from keras import backend as k
 
 from keras.preprocessing.image import ImageDataGenerator
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 from keras.models import Sequential, load_model, Model
 from keras.layers import Dense, Dropout, Flatten, Activation, BatchNormalization
 from keras.layers import Conv2D, MaxPooling2D, Input, Convolution2D
@@ -34,7 +34,7 @@ train_dir = './dataset_tropic/train'
 test_dir = './dataset_tropic/test'
 
 
-def load_data(train=True):
+def load_data(train=True, subtract_pixel_mean=True):
     # if train:
     #     target_path = 'dataset_tropic/dataset.txt'
     # elif not train:
@@ -49,13 +49,14 @@ def load_data(train=True):
                            categorical_labels=True,
                            normalize=True,
                            grayscale=False)
-    print(x)
-    print(y)
     x = np.asarray(x[:])
     # Resize to change image values from range 0,1 to 0,255
     # x *= 255
     y = np.asarray(y[:])
 
+    if subtract_pixel_mean:
+        x_mean = np.mean(x, axis=0)
+        x -= x_mean
 
     # Shuffle the data so later on not only the last classes are used
     # in the validation set
@@ -162,6 +163,20 @@ def cnn_model(images, conv_net=None):
     return model
 
 
+# def lr_schedule(epoch):
+#     lr = 1e-3
+#     if epoch > 180:
+#         lr *= 0.5e-3
+#     elif epoch > 160:
+#         lr *= 1e-3
+#     elif epoch > 120:
+#         lr *= 1e-2
+#     elif epoch > 80:
+#         lr *= 1e-1
+#     print('Learning rate: ', lr)
+#     return lr
+
+
 def training(use_data_aug=False, use_mixup=False, use_cutout=False):
     x_train, y_train = load_data(train=True)
     x_test, y_test = load_data(train=False)
@@ -177,11 +192,15 @@ def training(use_data_aug=False, use_mixup=False, use_cutout=False):
 
     model = cnn_model(x_train, conv_net=4)
 
-    checkpoint = ModelCheckpoint(filepath='./checkpoints',
+    checkpoint = ModelCheckpoint(filepath='./models/test.h5',
                                  monitor='val_acc',
                                  verbose=1,
                                  save_best_only=True)
 
+    lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1),
+                                   cooldown=0,
+                                   patience=3,
+                                   min_lr=0.5e-6)
     callbacks = [checkpoint]
 
     if use_mixup:
@@ -238,7 +257,7 @@ def training(use_data_aug=False, use_mixup=False, use_cutout=False):
                             validation_data=(x_test, y_test),
                             workers=4,
                             callbacks=callbacks)
-    model.save('./models/model.h5')
+    # model.save('./models/model.h5')
     # del model
 
 
