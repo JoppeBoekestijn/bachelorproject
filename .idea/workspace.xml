@@ -2,9 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="7c48d681-90d9-4f91-94db-ec1fe98386b2" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/Tutorial.iml" afterPath="$PROJECT_DIR$/.idea/Tutorial.iml" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change beforePath="$PROJECT_DIR$/neuralnetwork.py" afterPath="$PROJECT_DIR$/neuralnetwork.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -20,7 +17,7 @@
     <SUITE FILE_PATH="coverage/Tutorial$demo4_tropic_resnet.coverage" NAME="demo4_tropic_resnet Coverage Results" MODIFIED="1527061802189" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/bachelorproject$flowerdataset.coverage" NAME="flowerdataset Coverage Results" MODIFIED="1526475580982" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Tutorial$02_Convolutional_Neural_Network__1_.coverage" NAME="02_Convolutional_Neural_Network Coverage Results" MODIFIED="1525086130879" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$USER_HOME$/Documents/Studie/BachelorProject/TensorFlow-Tutorials" />
-    <SUITE FILE_PATH="coverage/Tutorial$neuralnetwork.coverage" NAME="neuralnetwork Coverage Results" MODIFIED="1528015309496" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Tutorial$neuralnetwork.coverage" NAME="neuralnetwork Coverage Results" MODIFIED="1528015891984" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Tutorial$Runpython.coverage" NAME="Runpython Coverage Results" MODIFIED="1519224064046" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
     <SUITE FILE_PATH="coverage/Tutorial$s2754215.coverage" NAME="s2754215 Coverage Results" MODIFIED="1526816947382" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Tutorial$testing.coverage" NAME="testing Coverage Results" MODIFIED="1525342509310" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
@@ -37,8 +34,8 @@
             <file leaf-file-name="demo4_tropic_resnet.py" pinned="false" current-in-tab="true">
               <entry file="file://$PROJECT_DIR$/demo4_tropic_resnet.py">
                 <provider selected="true" editor-type-id="text-editor">
-                  <state relative-caret-position="448">
-                    <caret line="89" column="15" lean-forward="false" selection-start-line="89" selection-start-column="15" selection-end-line="89" selection-end-column="15" />
+                  <state relative-caret-position="313">
+                    <caret line="90" column="47" lean-forward="false" selection-start-line="90" selection-start-column="33" selection-end-line="90" selection-end-column="47" />
                     <folding>
                       <element signature="e#241#278#0" expanded="true" />
                     </folding>
@@ -68,8 +65,8 @@
       <file leaf-file-name="neuralnetwork.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/neuralnetwork.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="455">
-              <caret line="54" column="0" lean-forward="true" selection-start-line="54" selection-start-column="0" selection-end-line="54" selection-end-column="0" />
+            <state relative-caret-position="405">
+              <caret line="53" column="44" lean-forward="true" selection-start-line="53" selection-start-column="44" selection-end-line="53" selection-end-column="44" />
               <folding />
             </state>
           </provider>
@@ -135,9 +132,9 @@
       <find>initialization</find>
       <find>Convolution2D</find>
       <find>del model</find>
-      <find>dataset_name</find>
       <find>del</find>
       <find>input_shape</find>
+      <find>dataset_name</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -171,11 +168,11 @@
         <option value="$PROJECT_DIR$/googleNet.py" />
         <option value="$PROJECT_DIR$/googlenet.py" />
         <option value="$PROJECT_DIR$/imagepreloader.py" />
-        <option value="$PROJECT_DIR$/demo4_tropic_resnet.py" />
         <option value="$PROJECT_DIR$/mixup_generator.py" />
         <option value="$PROJECT_DIR$/spatial_transformer.py" />
         <option value="$PROJECT_DIR$/Custom_layers.py" />
         <option value="$PROJECT_DIR$/alex_net.py" />
+        <option value="$PROJECT_DIR$/demo4_tropic_resnet.py" />
         <option value="$PROJECT_DIR$/neuralnetwork.py" />
       </list>
     </option>
@@ -498,7 +495,6 @@
     <entry file="file:///anaconda3/envs/tensorflow/lib/python2.7/site-packages/tensorflow/contrib/slim/python/slim/nets/resnet_v1.py" />
     <entry file="file:///anaconda3/envs/tensorflow/lib/python2.7/site-packages/tflearn/layers/core.py" />
     <entry file="file:///anaconda3/envs/tensorflow/lib/python2.7/site-packages/tflearn/layers/estimator.py" />
-    <entry file="file:///anaconda3/envs/tensorflow/lib/python2.7/site-packages/keras/engine/training.py" />
     <entry file="file:///anaconda3/envs/tensorflow/lib/python2.7/site-packages/keras/applications/__init__.py" />
     <entry file="file://$PROJECT_DIR$/01_Simple_Linear_Model.py" />
     <entry file="file://$PROJECT_DIR$/02_Convolutional_Neural_Network.py" />
@@ -580,10 +576,18 @@
         </state>
       </provider>
     </entry>
+    <entry file="file:///anaconda3/envs/tensorflow/lib/python2.7/site-packages/keras/engine/training.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="190">
+          <caret line="122" column="0" lean-forward="false" selection-start-line="122" selection-start-column="0" selection-end-line="122" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/demo4_tropic_resnet.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="448">
-          <caret line="89" column="15" lean-forward="false" selection-start-line="89" selection-start-column="15" selection-end-line="89" selection-end-column="15" />
+        <state relative-caret-position="313">
+          <caret line="90" column="47" lean-forward="false" selection-start-line="90" selection-start-column="33" selection-end-line="90" selection-end-column="47" />
           <folding>
             <element signature="e#241#278#0" expanded="true" />
           </folding>
@@ -592,8 +596,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/neuralnetwork.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="455">
-          <caret line="54" column="0" lean-forward="true" selection-start-line="54" selection-start-column="0" selection-end-line="54" selection-end-column="0" />
+        <state relative-caret-position="405">
+          <caret line="53" column="44" lean-forward="true" selection-start-line="53" selection-start-column="44" selection-end-line="53" selection-end-column="44" />
           <folding />
         </state>
       </provider>

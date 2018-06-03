@@ -29,8 +29,8 @@ batch_size = 20
 num_epochs = 10
 
 # Dataset
-train_dir = 'dataset_tropic/train'
-test_dir = 'dataset_tropic/test'
+train_dir = '/dataset_tropic/train'
+test_dir = '/dataset_tropic/test'
 
 
 def load_data(train=True):
@@ -48,10 +48,13 @@ def load_data(train=True):
                            categorical_labels=True,
                            normalize=True,
                            grayscale=False)
+    print(x)
+    print(y)
     x = np.asarray(x[:])
     # Resize to change image values from range 0,1 to 0,255
     # x *= 255
     y = np.asarray(y[:])
+
 
     # Shuffle the data so later on not only the last classes are used
     # in the validation set
@@ -172,8 +175,6 @@ def training(use_data_aug=True, use_mixup=False, use_cutout=False):
     # (cnn_model = 5) == ResNet_v2
 
     model = cnn_model(x_train, conv_net=4)
-
-    # model = spatial_transformer(x_train)
 
     if use_mixup:
         datagen = ImageDataGenerator(
