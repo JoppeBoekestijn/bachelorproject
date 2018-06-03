@@ -7,6 +7,7 @@ import keras
 from keras import backend as k
 
 from keras.preprocessing.image import ImageDataGenerator
+from keras.callbacks import ModelCheckpoint
 from keras.models import Sequential, load_model, Model
 from keras.layers import Dense, Dropout, Flatten, Activation, BatchNormalization
 from keras.layers import Conv2D, MaxPooling2D, Input, Convolution2D
@@ -29,8 +30,8 @@ batch_size = 20
 num_epochs = 10
 
 # Dataset
-train_dir = '/dataset_tropic/train'
-test_dir = '/dataset_tropic/test'
+train_dir = './dataset_tropic/train'
+test_dir = './dataset_tropic/test'
 
 
 def load_data(train=True):
@@ -161,7 +162,7 @@ def cnn_model(images, conv_net=None):
     return model
 
 
-def training(use_data_aug=True, use_mixup=False, use_cutout=False):
+def training(use_data_aug=False, use_mixup=False, use_cutout=False):
     x_train, y_train = load_data(train=True)
     x_test, y_test = load_data(train=False)
 
@@ -176,6 +177,13 @@ def training(use_data_aug=True, use_mixup=False, use_cutout=False):
 
     model = cnn_model(x_train, conv_net=4)
 
+    checkpoint = ModelCheckpoint(filepath='./checkpoints',
+                                 monitor='val_acc',
+                                 verbose=1,
+                                 save_best_only=True)
+
+    callbacks = [checkpoint]
+
     if use_mixup:
         datagen = ImageDataGenerator(
             width_shift_range=0.0,
@@ -189,7 +197,8 @@ def training(use_data_aug=True, use_mixup=False, use_cutout=False):
                             epochs=num_epochs,
                             steps_per_epoch=x_train.shape[0] // batch_size,
                             validation_data=(x_test, y_test),
-                            shuffle=True)
+                            shuffle=True,
+                            callbacks=callbacks)
     if use_cutout:
         datagen = ImageDataGenerator(
             width_shift_range=0,
@@ -201,13 +210,15 @@ def training(use_data_aug=True, use_mixup=False, use_cutout=False):
                                          batch_size=batch_size),
                             epochs=num_epochs,
                             validation_data=(x_test, y_test),
-                            workers=4)
+                            workers=4,
+                            callbacks=callbacks)
     if not use_data_aug and not use_mixup:
         model.fit(x_train, y_train,
                   batch_size=batch_size,
                   epochs=num_epochs,
                   validation_data=(x_test, y_test),
-                  shuffle=True)
+                  shuffle=True,
+                  callbacks=callbacks)
     elif use_data_aug:
         datagen = ImageDataGenerator(
             featurewise_center=False,  # set input mean to 0 over the dataset
@@ -225,7 +236,8 @@ def training(use_data_aug=True, use_mixup=False, use_cutout=False):
                                          batch_size=batch_size),
                             epochs=num_epochs,
                             validation_data=(x_test, y_test),
-                            workers=4)
+                            workers=4,
+                            callbacks=callbacks)
     model.save('./models/model.h5')
     # del model
 
