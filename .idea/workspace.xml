@@ -136,8 +136,8 @@
       <find>Convolution2D</find>
       <find>del model</find>
       <find>dataset_name</find>
-      <find>input_shape</find>
       <find>del</find>
+      <find>input_shape</find>
     </findStrings>
   </component>
   <component name="Git.Settings">

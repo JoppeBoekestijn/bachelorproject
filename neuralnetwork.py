@@ -230,7 +230,7 @@ def training(use_data_aug=True, use_mixup=False, use_cutout=False):
 
 
 def evaluate():
-    model = load_model('./models/resnet_false_false.h5')
+    model = load_model('./models/googlenet_true_false_100.h5')
     x_test, y_test = load_data(train=False)
     scores = model.evaluate(x_test, y_test, verbose=1)
     print('Test loss:', scores[0])
