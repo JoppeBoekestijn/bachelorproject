@@ -27,7 +27,7 @@ img_size = 224
 num_channels = 3
 num_classes = 10
 batch_size = 20
-num_epochs = 10
+num_epochs = 200
 
 # Dataset
 train_dir = './dataset_tropic/train'
@@ -49,8 +49,6 @@ def load_data(train=True):
                            categorical_labels=True,
                            normalize=True,
                            grayscale=False)
-    print(x)
-    print(y)
     x = np.asarray(x[:])
     # Resize to change image values from range 0,1 to 0,255
     # x *= 255
@@ -177,7 +175,7 @@ def training(use_data_aug=False, use_mixup=False, use_cutout=False):
 
     model = cnn_model(x_train, conv_net=4)
 
-    checkpoint = ModelCheckpoint(filepath='./checkpoints',
+    checkpoint = ModelCheckpoint(filepath='./models/test.h5',
                                  monitor='val_acc',
                                  verbose=1,
                                  save_best_only=True)
@@ -238,7 +236,7 @@ def training(use_data_aug=False, use_mixup=False, use_cutout=False):
                             validation_data=(x_test, y_test),
                             workers=4,
                             callbacks=callbacks)
-    model.save('./models/model.h5')
+    # model.save('./models/model.h5')
     # del model
 
 
