@@ -28,15 +28,23 @@ num_classes = 10
 batch_size = 20
 num_epochs = 10
 
+# Dataset
+train_dir = 'dataset_tropic/train'
+test_dir = 'dataset_tropic/test'
+
 
 def load_data(train=True):
+    # if train:
+    #     target_path = 'dataset_tropic/dataset.txt'
+    # elif not train:
+    #     target_path = 'dataset_tropic/dataseteval.txt'
     if train:
-        target_path = 'dataset_tropic/dataset.txt'
+        target_path = train_dir
     elif not train:
-        target_path = 'dataset_tropic/dataseteval.txt'
+        target_path = test_dir
     x, y = image_preloader(target_path=target_path,
                            image_shape=(img_size, img_size),
-                           mode='file',
+                           mode='folder',
                            categorical_labels=True,
                            normalize=True,
                            grayscale=False)
