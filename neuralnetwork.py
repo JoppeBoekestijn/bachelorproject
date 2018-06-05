@@ -11,7 +11,7 @@ from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, LearningRateSche
 from keras.callbacks import TensorBoard
 from keras.models import Sequential, load_model, Model
 from keras.layers import Dense, Dropout, Flatten, Activation, BatchNormalization
-from keras.layers import Conv2D, MaxPooling2D, Input, Convolution2D
+from keras.layers import Conv2D, MaxPooling2D, Input, GlobalAveragePooling2D
 from keras.applications.resnet50 import ResNet50
 from keras.applications.inception_v3 import InceptionV3
 
@@ -24,11 +24,11 @@ from res_net import resnet_v1, resnet_v2
 # from resnetcifarexample import resnet_v1, resnet_v2
 
 # Global variables
-img_size = 128 # 224 standard
+img_size = 224 # 224 standard
 num_channels = 3
 num_classes = 10
-batch_size = 64 # 20 standard
-num_epochs = 200
+batch_size = 20 # 20 standard
+num_epochs = 50
 
 # Dataset
 train_dir = './dataset_tropic/train'
@@ -131,11 +131,20 @@ def cnn_model(images, conv_net=None):
 
     # cnn_model == ResNet50
     if conv_net == 1:
-        model = ResNet50(input_tensor=input_tensor,
-                         weights='imagenet',
-                         include_top=True,
-                         input_shape=input_shape,
-                         classes=num_classes)
+        # model = ResNet50(input_tensor=input_tensor,
+        #                  weights='imagenet',
+        #                  include_top=False,
+        #                  input_shape=(img_size, img_size, num_channels),
+        #                  classes=num_classes)
+        base_model = ResNet50(weights='imagenet',
+                              include_top=False,
+                              input_shape=(img_size, img_size, num_channels))
+        model = base_model.output
+        # model = GlobalAveragePooling2D()(model)
+        model = Flatten()(model)
+        model = Dense(num_classes, activation='softmax')(model)
+        model = Model(input=base_model.input,
+                      output=model)
     # cnn_model == InceptionV3 (GoogleNet)
     elif conv_net == 2:
         model = InceptionV3(input_tensor=input_tensor,
@@ -170,19 +179,27 @@ def cnn_model(images, conv_net=None):
 
 def lr_schedule(epoch):
     lr = 1e-3
-    if epoch > 180:
+    # if epoch > 180:
+    #     lr *= 0.5e-3
+    # elif epoch > 160:
+    #     lr *= 1e-3
+    # elif epoch > 120:
+    #     lr *= 1e-2
+    # elif epoch > 80:
+    #     lr *= 1e-1
+    if epoch > 80:
         lr *= 0.5e-3
-    elif epoch > 160:
+    elif epoch > 60:
         lr *= 1e-3
-    elif epoch > 120:
+    elif epoch > 40:
         lr *= 1e-2
-    elif epoch > 80:
+    elif epoch > 20:
         lr *= 1e-1
     print('Learning rate: ', lr)
     return lr
 
 
-def training(filepath, use_data_aug=False, use_mixup=False, use_cutout=False):
+def training(use_data_aug=False, use_mixup=False, use_cutout=False):
     # Load the training and test data
     x_train, y_train = load_data(train=True)
     x_test, y_test = load_data(train=False)
@@ -193,6 +210,8 @@ def training(filepath, use_data_aug=False, use_mixup=False, use_cutout=False):
                               write_graph=True,
                               write_images=False)
 
+    # model = simple_cnn(x_train)
+
     # ConvNet models:
     # (cnn_model = 1) == ResNet50
     # (cnn_model = 2) == Inception v3 (GoogleNet)
@@ -200,7 +219,7 @@ def training(filepath, use_data_aug=False, use_mixup=False, use_cutout=False):
     # (cnn_model = 4) == ResNet_v1
     # (cnn_model = 5) == ResNet_v2
 
-    model = cnn_model(x_train, conv_net=4)
+    model = cnn_model(x_train, conv_net=1)
 
     checkpoint = ModelCheckpoint(filepath=filepath,
                                  monitor='val_acc',
@@ -214,7 +233,7 @@ def training(filepath, use_data_aug=False, use_mixup=False, use_cutout=False):
                                    patience=5,
                                    min_lr=0.5e-6)
 
-    callbacks = [checkpoint, lr_reducer, lr_scheduler, tensorboard]
+    callbacks = [checkpoint, lr_scheduler, tensorboard]
 
     if use_mixup:
         datagen = ImageDataGenerator()
