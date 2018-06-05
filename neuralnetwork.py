@@ -28,7 +28,7 @@ img_size = 224 # 224 standard
 num_channels = 3
 num_classes = 10
 batch_size = 20 # 20 standard
-num_epochs = 200
+num_epochs = 50
 
 # Dataset
 train_dir = './dataset_tropic/train'
