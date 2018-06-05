@@ -221,7 +221,7 @@ def training(use_data_aug=False, use_mixup=False, use_cutout=False):
 
     model = cnn_model(x_train, conv_net=1)
 
-    checkpoint = ModelCheckpoint(filepath='./models/test.h5',
+    checkpoint = ModelCheckpoint(filepath=filepath,
                                  monitor='val_acc',
                                  verbose=1,
                                  save_best_only=True)
@@ -236,10 +236,7 @@ def training(use_data_aug=False, use_mixup=False, use_cutout=False):
     callbacks = [checkpoint, lr_scheduler, tensorboard]
 
     if use_mixup:
-        datagen = ImageDataGenerator(
-            width_shift_range=0.0,
-            height_shift_range=0.0,
-            horizontal_flip=False)
+        datagen = ImageDataGenerator()
         training_generator = MixupGenerator(x_train, y_train,
                                             batch_size=batch_size,
                                             alpha=0.2,
@@ -250,33 +247,17 @@ def training(use_data_aug=False, use_mixup=False, use_cutout=False):
                             validation_data=(x_test, y_test),
                             shuffle=True,
                             callbacks=callbacks)
-    if use_cutout:
-        datagen = ImageDataGenerator(
-            width_shift_range=0,
-            height_shift_range=0,
-            horizontal_flip=False,
-            preprocessing_function=get_random_cutout(v_l=0, v_h=255))
+    elif use_cutout:
+        datagen = ImageDataGenerator(preprocessing_function=get_random_cutout(v_l=0, v_h=255))
         datagen.fit(x_train)
-        model.fit_generator(datagen.flow(x_train, y_train,
-                                         batch_size=batch_size),
+        model.fit_generator(generator=datagen.flow(x_train, y_train,
+                                                   batch_size=batch_size),
                             epochs=num_epochs,
                             validation_data=(x_test, y_test),
-                            workers=4,
+                            shuffle=True,
                             callbacks=callbacks)
-    if not use_data_aug and not use_mixup:
-        model.fit(x_train, y_train,
-                  batch_size=batch_size,
-                  epochs=num_epochs,
-                  validation_data=(x_test, y_test),
-                  shuffle=True,
-                  callbacks=callbacks)
     elif use_data_aug:
         datagen = ImageDataGenerator(
-            featurewise_center=False,  # set input mean to 0 over the dataset
-            samplewise_center=False,  # set each sample mean to 0
-            featurewise_std_normalization=False,  # divide inputs by std of the dataset
-            samplewise_std_normalization=False,  # divide each input by its std
-            zca_whitening=False,  # apply ZCA whitening
             rotation_range=0,  # randomly rotate images in the range (degrees, 0 to 180)
             width_shift_range=0,  # randomly shift images horizontally (fraction of total width)
             height_shift_range=0,  # randomly shift images vertically (fraction of total height)
@@ -287,8 +268,16 @@ def training(use_data_aug=False, use_mixup=False, use_cutout=False):
                                          batch_size=batch_size),
                             epochs=num_epochs,
                             validation_data=(x_test, y_test),
-                            workers=4,
+                            shuffle=True,
                             callbacks=callbacks)
+    # No data augmentation
+    else:
+        model.fit(x_train, y_train,
+                  batch_size=batch_size,
+                  epochs=num_epochs,
+                  validation_data=(x_test, y_test),
+                  shuffle=True,
+                  callbacks=callbacks)
     # model.save('./models/model.h5')
     # del model
 
@@ -313,7 +302,10 @@ def main():
 
     k.tensorflow_backend.set_session(tf.Session(config=config))
 
-    training(use_data_aug=False, use_mixup=False, use_cutout=False)
+    training(filepath='./models/test.h5',
+             use_data_aug=False,
+             use_mixup=False,
+             use_cutout=False)
 
     # evaluate()
 
