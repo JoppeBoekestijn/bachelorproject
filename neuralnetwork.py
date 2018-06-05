@@ -7,7 +7,7 @@ import keras
 from keras import backend as k
 
 from keras.preprocessing.image import ImageDataGenerator
-from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
+from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler
 from keras.models import Sequential, load_model, Model
 from keras.layers import Dense, Dropout, Flatten, Activation, BatchNormalization
 from keras.layers import Conv2D, MaxPooling2D, Input, Convolution2D
@@ -23,10 +23,10 @@ from res_net import resnet_v1, resnet_v2
 # from resnetcifarexample import resnet_v1, resnet_v2
 
 # Global variables
-img_size = 224
+img_size = 128 # 224 standard
 num_channels = 3
 num_classes = 10
-batch_size = 20
+batch_size = 64 # 20 standard
 num_epochs = 200
 
 # Dataset
@@ -131,8 +131,8 @@ def cnn_model(images, conv_net=None):
     # cnn_model == ResNet50
     if conv_net == 1:
         model = ResNet50(input_tensor=input_tensor,
-                         weights=None,
-                         include_top=True,
+                         weights='imagenet',
+                         include_top=False,
                          classes=num_classes)
     # cnn_model == InceptionV3 (GoogleNet)
     elif conv_net == 2:
@@ -157,24 +157,27 @@ def cnn_model(images, conv_net=None):
                           num_classes=10)
 
     model.summary()
-    model.compile(loss=keras.losses.categorical_crossentropy,
-                  optimizer=keras.optimizers.Adam(),
+    # model.compile(loss=keras.losses.categorical_crossentropy,
+    #               optimizer=keras.optimizers.Adam(),
+    #               metrics=['accuracy'])
+    model.compile(loss='categorical_crossentropy',
+                  optimizer=keras.optimizers.Adam(lr=lr_schedule(0)),
                   metrics=['accuracy'])
     return model
 
 
-# def lr_schedule(epoch):
-#     lr = 1e-3
-#     if epoch > 180:
-#         lr *= 0.5e-3
-#     elif epoch > 160:
-#         lr *= 1e-3
-#     elif epoch > 120:
-#         lr *= 1e-2
-#     elif epoch > 80:
-#         lr *= 1e-1
-#     print('Learning rate: ', lr)
-#     return lr
+def lr_schedule(epoch):
+    lr = 1e-3
+    if epoch > 180:
+        lr *= 0.5e-3
+    elif epoch > 160:
+        lr *= 1e-3
+    elif epoch > 120:
+        lr *= 1e-2
+    elif epoch > 80:
+        lr *= 1e-1
+    print('Learning rate: ', lr)
+    return lr
 
 
 def training(use_data_aug=False, use_mixup=False, use_cutout=False):
@@ -197,11 +200,14 @@ def training(use_data_aug=False, use_mixup=False, use_cutout=False):
                                  verbose=1,
                                  save_best_only=True)
 
+    lr_scheduler = LearningRateScheduler(lr_schedule)
+
     lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1),
                                    cooldown=0,
-                                   patience=3,
+                                   patience=5,
                                    min_lr=0.5e-6)
-    callbacks = [checkpoint]
+
+    callbacks = [checkpoint, lr_reducer, lr_scheduler]
 
     if use_mixup:
         datagen = ImageDataGenerator(
