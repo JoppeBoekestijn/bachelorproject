@@ -8,6 +8,7 @@ from keras import backend as k
 
 from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler
+from keras.callbacks import TensorBoard
 from keras.models import Sequential, load_model, Model
 from keras.layers import Dense, Dropout, Flatten, Activation, BatchNormalization
 from keras.layers import Conv2D, MaxPooling2D, Input, Convolution2D
@@ -132,7 +133,8 @@ def cnn_model(images, conv_net=None):
     if conv_net == 1:
         model = ResNet50(input_tensor=input_tensor,
                          weights='imagenet',
-                         include_top=False,
+                         include_top=True,
+                         input_shape=input_shape,
                          classes=num_classes)
     # cnn_model == InceptionV3 (GoogleNet)
     elif conv_net == 2:
@@ -180,11 +182,16 @@ def lr_schedule(epoch):
     return lr
 
 
-def training(use_data_aug=False, use_mixup=False, use_cutout=False):
+def training(filepath, use_data_aug=False, use_mixup=False, use_cutout=False):
+    # Load the training and test data
     x_train, y_train = load_data(train=True)
     x_test, y_test = load_data(train=False)
 
-    # model = simple_cnn(x_train)
+    # Add a Tensorboard callback for visualization using Tensorboard
+    tensorboard = TensorBoard(log_dir='./logs',
+                              histogram_freq=0,
+                              write_graph=True,
+                              write_images=False)
 
     # ConvNet models:
     # (cnn_model = 1) == ResNet50
@@ -195,7 +202,7 @@ def training(use_data_aug=False, use_mixup=False, use_cutout=False):
 
     model = cnn_model(x_train, conv_net=4)
 
-    checkpoint = ModelCheckpoint(filepath='./models/test.h5',
+    checkpoint = ModelCheckpoint(filepath=filepath,
                                  monitor='val_acc',
                                  verbose=1,
                                  save_best_only=True)
@@ -207,13 +214,10 @@ def training(use_data_aug=False, use_mixup=False, use_cutout=False):
                                    patience=5,
                                    min_lr=0.5e-6)
 
-    callbacks = [checkpoint, lr_reducer, lr_scheduler]
+    callbacks = [checkpoint, lr_reducer, lr_scheduler, tensorboard]
 
     if use_mixup:
-        datagen = ImageDataGenerator(
-            width_shift_range=0.0,
-            height_shift_range=0.0,
-            horizontal_flip=False)
+        datagen = ImageDataGenerator()
         training_generator = MixupGenerator(x_train, y_train,
                                             batch_size=batch_size,
                                             alpha=0.2,
@@ -224,33 +228,17 @@ def training(use_data_aug=False, use_mixup=False, use_cutout=False):
                             validation_data=(x_test, y_test),
                             shuffle=True,
                             callbacks=callbacks)
-    if use_cutout:
-        datagen = ImageDataGenerator(
-            width_shift_range=0,
-            height_shift_range=0,
-            horizontal_flip=False,
-            preprocessing_function=get_random_cutout(v_l=0, v_h=255))
+    elif use_cutout:
+        datagen = ImageDataGenerator(preprocessing_function=get_random_cutout(v_l=0, v_h=255))
         datagen.fit(x_train)
-        model.fit_generator(datagen.flow(x_train, y_train,
-                                         batch_size=batch_size),
+        model.fit_generator(generator=datagen.flow(x_train, y_train,
+                                                   batch_size=batch_size),
                             epochs=num_epochs,
                             validation_data=(x_test, y_test),
-                            workers=4,
+                            shuffle=True,
                             callbacks=callbacks)
-    if not use_data_aug and not use_mixup:
-        model.fit(x_train, y_train,
-                  batch_size=batch_size,
-                  epochs=num_epochs,
-                  validation_data=(x_test, y_test),
-                  shuffle=True,
-                  callbacks=callbacks)
     elif use_data_aug:
         datagen = ImageDataGenerator(
-            featurewise_center=False,  # set input mean to 0 over the dataset
-            samplewise_center=False,  # set each sample mean to 0
-            featurewise_std_normalization=False,  # divide inputs by std of the dataset
-            samplewise_std_normalization=False,  # divide each input by its std
-            zca_whitening=False,  # apply ZCA whitening
             rotation_range=0,  # randomly rotate images in the range (degrees, 0 to 180)
             width_shift_range=0,  # randomly shift images horizontally (fraction of total width)
             height_shift_range=0,  # randomly shift images vertically (fraction of total height)
@@ -261,8 +249,16 @@ def training(use_data_aug=False, use_mixup=False, use_cutout=False):
                                          batch_size=batch_size),
                             epochs=num_epochs,
                             validation_data=(x_test, y_test),
-                            workers=4,
+                            shuffle=True,
                             callbacks=callbacks)
+    # No data augmentation
+    else:
+        model.fit(x_train, y_train,
+                  batch_size=batch_size,
+                  epochs=num_epochs,
+                  validation_data=(x_test, y_test),
+                  shuffle=True,
+                  callbacks=callbacks)
     # model.save('./models/model.h5')
     # del model
 
@@ -287,7 +283,10 @@ def main():
 
     k.tensorflow_backend.set_session(tf.Session(config=config))
 
-    training(use_data_aug=False, use_mixup=False, use_cutout=False)
+    training(filepath='./models/test.h5',
+             use_data_aug=False,
+             use_mixup=False,
+             use_cutout=False)
 
     # evaluate()
 
