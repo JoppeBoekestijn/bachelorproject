@@ -14,6 +14,7 @@ from keras.layers import Dense, Dropout, Flatten, Activation, BatchNormalization
 from keras.layers import Conv2D, MaxPooling2D, Input, GlobalAveragePooling2D
 from keras.applications.resnet50 import ResNet50
 from keras.applications.inception_v3 import InceptionV3
+from keras.applications.vgg16 import VGG16
 
 import numpy as np
 from tflearn.data_utils import image_preloader
@@ -145,27 +146,55 @@ def cnn_model(images, conv_net=None):
         model = Dense(num_classes, activation='softmax')(model)
         model = Model(input=base_model.input,
                       output=model)
-    # cnn_model == InceptionV3 (GoogleNet)
     elif conv_net == 2:
+        base_model = InceptionV3(weights='imagenet',
+                                 include_top=False,
+                                 input_shape=(img_size, img_size, num_channels))
+        model = base_model.output
+        model = GlobalAveragePooling2D()(model)
+        x = Dense(1024, activation='relu')(model)
+        # model = Flatten()(model)
+        model = Dense(num_classes, activation='softmax')(model)
+        model = Model(input=base_model.input,
+                      output=model)
+
+    # cnn_model == VGG16
+    elif conv_net == 3:
+        base_model = VGG16(weights='imagenet',
+                           include_top=False,
+                           input_shape=(img_size, img_size, num_channels))
+        model = base_model.output
+        # model = GlobalAveragePooling2D()(model)
+        model = Flatten()(model)
+        model = Dense(num_classes, activation='softmax')(model)
+        model = Model(input=base_model.input,
+                      output=model)
+
+    # cnn_model == InceptionV3(GoogleNet) from scratch
+    elif conv_net == 4:
         model = InceptionV3(input_tensor=input_tensor,
                             weights=None,
                             include_top=True,
                             classes=num_classes)
-    # cnn_model == AlexNet
-    elif conv_net == 3:
-        model = alex_net()
-
-    # cnn_model == ResNet_v1
-    elif conv_net == 4:
-        model = resnet_v1(input_shape=input_shape,
-                          depth=n * 6 + 2,
-                          num_classes=10)
-
-    # cnn_model == ResNet_v2
+    # cnn_model == ResNet from scratch
     elif conv_net == 5:
-        model = resnet_v2(input_shape=input_shape,
-                          depth=n * 9 + 2,
-                          num_classes=10)
+        model = ResNet50(input_tensor=input_tensor,
+                         weights=None,
+                         include_top=True,
+                         classes=num_classes)
+    # # cnn_model == ResNet_v1
+    # elif conv_net == 6:
+    #     model = resnet_v1(input_shape=input_shape,
+    #                       depth=n * 6 + 2,
+    #                       num_classes=10)
+    #
+    # # cnn_model == ResNet_v2
+    # elif conv_net == 5:
+    #     model = resnet_v2(input_shape=input_shape,
+    #                       depth=n * 9 + 2,
+    #                       num_classes=10)
+
+
 
     model.summary()
     # model.compile(loss=keras.losses.categorical_crossentropy,
@@ -205,7 +234,7 @@ def training(filepath, use_data_aug=False, use_mixup=False, use_cutout=False):
     x_test, y_test = load_data(train=False)
 
     # Add a Tensorboard callback for visualization using Tensorboard
-    tensorboard = TensorBoard(log_dir='./logs',
+    tensorboard = TensorBoard(log_dir='./logs/' + filepath,
                               histogram_freq=0,
                               write_graph=True,
                               write_images=False)
@@ -218,8 +247,9 @@ def training(filepath, use_data_aug=False, use_mixup=False, use_cutout=False):
     # (cnn_model = 3) == AlexNet
     # (cnn_model = 4) == ResNet_v1
     # (cnn_model = 5) == ResNet_v2
+    # (cnn_model = 6) == VGG-16
 
-    model = cnn_model(x_train, conv_net=1)
+    model = cnn_model(x_train, conv_net=4)
 
     checkpoint = ModelCheckpoint(filepath=filepath,
                                  monitor='val_acc',
@@ -248,7 +278,7 @@ def training(filepath, use_data_aug=False, use_mixup=False, use_cutout=False):
                             shuffle=True,
                             callbacks=callbacks)
     elif use_cutout:
-        datagen = ImageDataGenerator(preprocessing_function=get_random_cutout(v_l=0, v_h=255))
+        datagen = ImageDataGenerator(preprocessing_function=get_random_cutout(v_l=0, v_h=1, pixel_level=False))
         datagen.fit(x_train)
         model.fit_generator(generator=datagen.flow(x_train, y_train,
                                                    batch_size=batch_size),
@@ -259,9 +289,9 @@ def training(filepath, use_data_aug=False, use_mixup=False, use_cutout=False):
     elif use_data_aug:
         datagen = ImageDataGenerator(
             rotation_range=0,  # randomly rotate images in the range (degrees, 0 to 180)
-            width_shift_range=0,  # randomly shift images horizontally (fraction of total width)
+            width_shift_range=0.2,  # randomly shift images horizontally (fraction of total width)
             height_shift_range=0,  # randomly shift images vertically (fraction of total height)
-            horizontal_flip=True,  # randomly flip images
+            horizontal_flip=False,  # randomly flip images
             vertical_flip=False)  # randomly flip images
         datagen.fit(x_train)
         model.fit_generator(datagen.flow(x_train, y_train,
@@ -282,8 +312,9 @@ def training(filepath, use_data_aug=False, use_mixup=False, use_cutout=False):
     # del model
 
 
-def evaluate():
-    model = load_model('./models/googlenet_true_false_100.h5')
+def evaluate(filepath):
+    # Load the test data and evaluate once without data augmentation
+    model = load_model(filepath=filepath)
     x_test, y_test = load_data(train=False)
     scores = model.evaluate(x_test, y_test, verbose=1)
     print('Test loss:', scores[0])
@@ -294,6 +325,7 @@ def main():
     """
     Main function to run convolutional neural network
     """
+    # Config to not overload GPU
     config = tf.ConfigProto()
 
     config.gpu_options.allow_growth = True
@@ -302,12 +334,14 @@ def main():
 
     k.tensorflow_backend.set_session(tf.Session(config=config))
 
-    training(filepath='./models/test.h5',
-             use_data_aug=False,
+    # Instantiate the training with chosen setting
+    training(filepath='./models/googlenet_widthshift20_50.h5',
+             use_data_aug=True,
              use_mixup=False,
              use_cutout=False)
 
-    # evaluate()
+    # Evaluate model on test data once, without any augmentation
+    # evaluate(filepath='./models/googlenet_widthshift20_50_scratch.h5')
 
 
 if __name__ == '__main__':
