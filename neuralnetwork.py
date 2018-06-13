@@ -199,7 +199,7 @@ def lr_schedule(epoch):
     return lr
 
 
-def training(use_data_aug=False, use_mixup=False, use_cutout=False):
+def training(filepath, use_data_aug=False, use_mixup=False, use_cutout=False):
     # Load the training and test data
     x_train, y_train = load_data(train=True)
     x_test, y_test = load_data(train=False)
