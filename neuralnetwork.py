@@ -127,7 +127,7 @@ def lr_schedule(epoch):
     return lr
 
 
-def data_aug(data_aug=None):
+def data_aug(callbacks, model, x_test, y_test, data_aug=None):
     # No data augmentation
     if data_aug == 0:
         model.fit(x_train, y_train,
@@ -166,7 +166,7 @@ def data_aug(data_aug=None):
                         callbacks=callbacks)
 
 
-def advanced_data_aug(data_aug=None):
+def advanced_data_aug(callbacks, model, x_test, y_test, data_aug=None):
     # Apply mix-up
     if data_aug == 6:
         datagen = ImageDataGenerator()
@@ -211,7 +211,7 @@ def training(filepath, conv_net=None, use_data_aug=None):
         model = cnn_model(x_train, conv_net=2)
     elif conv_net == 3:
         model = cnn_model(x_train, conv_net=3)
-    elif conv_net == 4:
+    else:
         model = cnn_model(x_train, conv_net=4)
 
     checkpoint = ModelCheckpoint(filepath=filepath,
@@ -225,9 +225,17 @@ def training(filepath, conv_net=None, use_data_aug=None):
 
     # Apply traditional data augmentation
     if use_data_aug < 6:
-        data_aug(data_aug=use_data_aug)
+        data_aug(callbacks=callbacks,
+                 model=model,
+                 data_aug=use_data_aug,
+                 x_test=x_test,
+                 y_test=y_test)
     elif use_data_aug > 5:
-        advanced_data_aug(data_aug=use_data_aug)
+        advanced_data_aug(callbacks=callbacks,
+                          model=model,
+                          data_aug=use_data_aug,
+                          x_test=x_test,
+                          y_test=y_test)
 
 
 def evaluate(filepath):
