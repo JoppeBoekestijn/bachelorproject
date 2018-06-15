@@ -128,16 +128,8 @@ def lr_schedule(epoch):
 
 
 def use_data_aug(callbacks, model, x_train, y_train, x_test, y_test, data_aug=None):
-    # No data augmentation
-    if data_aug == 0:
-        model.fit(x_train, y_train,
-                  batch_size=batch_size,
-                  epochs=num_epochs,
-                  validation_data=(x_test, y_test),
-                  shuffle=True,
-                  callbacks=callbacks)
     # Rotation
-    elif data_aug == 1:
+    if data_aug == 1:
         datagen = ImageDataGenerator(
             rotation_range=60)  # randomly rotate images in the range (degrees, 0 to 180)
     # Horizontal flip
@@ -192,6 +184,14 @@ def advanced_data_aug(callbacks, model, x_train, y_train, x_test, y_test, data_a
                             validation_data=(x_test, y_test),
                             shuffle=True,
                             callbacks=callbacks)
+    # No data augmentation
+    elif data_aug == 8:
+        model.fit(x_train, y_train,
+                  batch_size=batch_size,
+                  epochs=num_epochs,
+                  validation_data=(x_test, y_test),
+                  shuffle=True,
+                  callbacks=callbacks)
 
 
 def training(filepath, conv_net=None, data_aug=None):
@@ -230,7 +230,7 @@ def training(filepath, conv_net=None, data_aug=None):
     if data_aug < 6:
         use_data_aug(callbacks=callbacks,
                  model=model,
-                 data_aug=use_data_aug,
+                 data_aug=data_aug,
                  x_train=x_train,
                  y_train=y_train,
                  x_test=x_test,
@@ -238,7 +238,7 @@ def training(filepath, conv_net=None, data_aug=None):
     elif data_aug > 5:
         advanced_data_aug(callbacks=callbacks,
                           model=model,
-                          data_aug=use_data_aug,
+                          data_aug=data_aug,
                           x_train=x_train,
                           y_train=y_train,
                           x_test=x_test,
