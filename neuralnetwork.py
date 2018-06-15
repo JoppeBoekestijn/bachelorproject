@@ -128,14 +128,6 @@ def lr_schedule(epoch):
 
 
 def data_aug(callbacks, model, x_test, y_test, data_aug=None):
-    # No data augmentation
-    if data_aug == 0:
-        model.fit(x_train, y_train,
-                  batch_size=batch_size,
-                  epochs=num_epochs,
-                  validation_data=(x_test, y_test),
-                  shuffle=True,
-                  callbacks=callbacks)
     # Rotation
     if data_aug == 1:
         datagen = ImageDataGenerator(
@@ -192,6 +184,14 @@ def advanced_data_aug(callbacks, model, x_test, y_test, data_aug=None):
                             validation_data=(x_test, y_test),
                             shuffle=True,
                             callbacks=callbacks)
+    # No data augmentation
+    elif data_aug == 8:
+        model.fit(x_train, y_train,
+                  batch_size=batch_size,
+                  epochs=num_epochs,
+                  validation_data=(x_test, y_test),
+                  shuffle=True,
+                  callbacks=callbacks)
 
 
 def training(filepath, conv_net=None, use_data_aug=None):
