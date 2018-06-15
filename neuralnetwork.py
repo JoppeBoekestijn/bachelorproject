@@ -21,8 +21,6 @@ from tflearn.data_utils import image_preloader
 
 from mixup_generator import MixupGenerator
 from cutout import get_random_cutout
-from res_net import resnet_v1, resnet_v2
-# from resnetcifarexample import resnet_v1, resnet_v2
 
 # Global variables
 img_size = 224 # 224 standard
@@ -37,10 +35,6 @@ test_dir = './dataset_tropic/test'
 
 
 def load_data(train=True, subtract_pixel_mean=True):
-    # if train:
-    #     target_path = 'dataset_tropic/dataset.txt'
-    # elif not train:
-    #     target_path = 'dataset_tropic/dataseteval.txt'
     if train:
         target_path = train_dir
     elif not train:
@@ -52,8 +46,6 @@ def load_data(train=True, subtract_pixel_mean=True):
                            normalize=True,
                            grayscale=False)
     x = np.asarray(x[:])
-    # Resize to change image values from range 0,1 to 0,255
-    # x *= 255
     y = np.asarray(y[:])
 
     if subtract_pixel_mean:
@@ -74,69 +66,11 @@ def random_shuffle(images, labels):
     return random_image, random_label
 
 
-def alex_net():
-    model = Sequential()
-
-    model.add(Conv2D(filters=96, input_shape=(224, 224, 3), kernel_size=(11, 11),
-                     strides=(4, 4), padding='valid'))
-    model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid'))
-    model.add(BatchNormalization())
-
-    model.add(Conv2D(filters=256, kernel_size=(11, 11), strides=(1, 1), padding='valid'))
-    model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid'))
-    model.add(BatchNormalization())
-
-    model.add(Conv2D(filters=384, kernel_size=(3, 3), strides=(1, 1), padding='valid'))
-    model.add(Activation('relu'))
-    model.add(BatchNormalization())
-
-    model.add(Conv2D(filters=384, kernel_size=(3, 3), strides=(1, 1), padding='valid'))
-    model.add(Activation('relu'))
-    model.add(BatchNormalization())
-
-    model.add(Conv2D(filters=256, kernel_size=(3, 3), strides=(1, 1), padding='valid'))
-    model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid'))
-    model.add(BatchNormalization())
-
-    model.add(Flatten())
-    model.add(Dense(4096, input_shape=(224 * 224 * 3,)))
-    model.add(Activation('relu'))
-    model.add(Dropout(0.5))
-    model.add(BatchNormalization())
-
-    model.add(Dense(4096))
-    model.add(Activation('relu'))
-    model.add(Dropout(0.5))
-    model.add(BatchNormalization())
-
-    model.add(Dense(1000))
-    model.add(Activation('relu'))
-    model.add(Dropout(0.5))
-    model.add(BatchNormalization())
-
-    model.add(Dense(10))
-    model.add(Activation('softmax'))
-
-    return model
-
-
 def cnn_model(images, conv_net=None):
     input_tensor = Input(shape=(img_size, img_size, num_channels))
-    # Different input shape needed for ResNet_v1 and ResNet_v2
-    # Since they call input function themselves
-    input_shape = (img_size, img_size, num_channels)
-    n = 3
 
-    # cnn_model == ResNet50
+    # cnn_model == ResNet50 with pre-trained weights
     if conv_net == 1:
-        # model = ResNet50(input_tensor=input_tensor,
-        #                  weights='imagenet',
-        #                  include_top=False,
-        #                  input_shape=(img_size, img_size, num_channels),
-        #                  classes=num_classes)
         base_model = ResNet50(weights='imagenet',
                               include_top=False,
                               input_shape=(img_size, img_size, num_channels))
@@ -146,6 +80,7 @@ def cnn_model(images, conv_net=None):
         model = Dense(num_classes, activation='softmax')(model)
         model = Model(input=base_model.input,
                       output=model)
+    # cnn-model == InceptionV3(GoogleNet) with pre-trained weights
     elif conv_net == 2:
         base_model = InceptionV3(weights='imagenet',
                                  include_top=False,
@@ -182,24 +117,8 @@ def cnn_model(images, conv_net=None):
                          weights=None,
                          include_top=True,
                          classes=num_classes)
-    # # cnn_model == ResNet_v1
-    # elif conv_net == 6:
-    #     model = resnet_v1(input_shape=input_shape,
-    #                       depth=n * 6 + 2,
-    #                       num_classes=10)
-    #
-    # # cnn_model == ResNet_v2
-    # elif conv_net == 5:
-    #     model = resnet_v2(input_shape=input_shape,
-    #                       depth=n * 9 + 2,
-    #                       num_classes=10)
-
-
 
     model.summary()
-    # model.compile(loss=keras.losses.categorical_crossentropy,
-    #               optimizer=keras.optimizers.Adam(),
-    #               metrics=['accuracy'])
     model.compile(loss='categorical_crossentropy',
                   optimizer=keras.optimizers.Adam(lr=lr_schedule(0)),
                   metrics=['accuracy'])
@@ -208,14 +127,6 @@ def cnn_model(images, conv_net=None):
 
 def lr_schedule(epoch):
     lr = 1e-3
-    # if epoch > 180:
-    #     lr *= 0.5e-3
-    # elif epoch > 160:
-    #     lr *= 1e-3
-    # elif epoch > 120:
-    #     lr *= 1e-2
-    # elif epoch > 80:
-    #     lr *= 1e-1
     if epoch > 80:
         lr *= 0.5e-3
     elif epoch > 60:
@@ -239,15 +150,12 @@ def training(filepath, use_data_aug=False, use_mixup=False, use_cutout=False):
                               write_graph=True,
                               write_images=False)
 
-    # model = simple_cnn(x_train)
-
     # ConvNet models:
-    # (cnn_model = 1) == ResNet50
-    # (cnn_model = 2) == Inception v3 (GoogleNet)
-    # (cnn_model = 3) == AlexNet
-    # (cnn_model = 4) == ResNet_v1
-    # (cnn_model = 5) == ResNet_v2
-    # (cnn_model = 6) == VGG-16
+    # (cnn_model = 1) == ResNet50 with pre-trained weights
+    # (cnn_model = 2) == Inception v3 (GoogleNet) with pre-trained weights
+    # (cnn_model = 3) == VGG16
+    # (cnn_model = 4) == Inception v3 (GoogleNet) from scratch
+    # (cnn_model = 5) == ResNet50 from scratch
 
     model = cnn_model(x_train, conv_net=4)
 
@@ -258,10 +166,11 @@ def training(filepath, use_data_aug=False, use_mixup=False, use_cutout=False):
 
     lr_scheduler = LearningRateScheduler(lr_schedule)
 
-    lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1),
-                                   cooldown=0,
-                                   patience=5,
-                                   min_lr=0.5e-6)
+    # Currently not in use
+    # lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1),
+    #                                cooldown=0,
+    #                                patience=5,
+    #                                min_lr=0.5e-6)
 
     callbacks = [checkpoint, lr_scheduler, tensorboard]
 
@@ -278,7 +187,9 @@ def training(filepath, use_data_aug=False, use_mixup=False, use_cutout=False):
                             shuffle=True,
                             callbacks=callbacks)
     elif use_cutout:
-        datagen = ImageDataGenerator(preprocessing_function=get_random_cutout(v_l=0, v_h=1, pixel_level=False))
+        datagen = ImageDataGenerator(preprocessing_function=get_random_cutout(v_l=0, v_h=1, pixel_level=False),
+                                     vertical_flip=False,
+                                     height_shift_range=0)
         datagen.fit(x_train)
         model.fit_generator(generator=datagen.flow(x_train, y_train,
                                                    batch_size=batch_size),
@@ -292,7 +203,7 @@ def training(filepath, use_data_aug=False, use_mixup=False, use_cutout=False):
             width_shift_range=0.2,  # randomly shift images horizontally (fraction of total width)
             height_shift_range=0,  # randomly shift images vertically (fraction of total height)
             horizontal_flip=False,  # randomly flip images
-            vertical_flip=False)  # randomly flip images
+            vertical_flip=True)  # randomly flip images
         datagen.fit(x_train)
         model.fit_generator(datagen.flow(x_train, y_train,
                                          batch_size=batch_size),
@@ -308,8 +219,6 @@ def training(filepath, use_data_aug=False, use_mixup=False, use_cutout=False):
                   validation_data=(x_test, y_test),
                   shuffle=True,
                   callbacks=callbacks)
-    # model.save('./models/model.h5')
-    # del model
 
 
 def evaluate(filepath):
@@ -335,13 +244,13 @@ def main():
     k.tensorflow_backend.set_session(tf.Session(config=config))
 
     # Instantiate the training with chosen setting
-    training(filepath='./models/googlenet_widthshift20_50.h5',
-             use_data_aug=True,
-             use_mixup=False,
-             use_cutout=False)
+    # training(filepath='./models/comb/googlenet_vertflip_vertshift_scratch.h5',
+    #          use_data_aug=True,
+    #          use_mixup=False,
+    #          use_cutout=False)
 
     # Evaluate model on test data once, without any augmentation
-    # evaluate(filepath='./models/googlenet_widthshift20_50_scratch.h5')
+    evaluate(filepath='./models/comb/googlenet_vertflip_vertshift_scratch.h5')
 
 
 if __name__ == '__main__':
