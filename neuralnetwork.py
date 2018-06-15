@@ -24,10 +24,10 @@ from mixup_generator import MixupGenerator
 from cutout import get_random_cutout
 
 # Global variables
-img_size = 224 # 224 standard
+img_size = 224  # 224 standard
 num_channels = 3
 num_classes = 10
-batch_size = 20 # 20 standard
+batch_size = 20  # 20 standard
 num_epochs = 50
 
 # Dataset
@@ -93,27 +93,14 @@ def cnn_model(images, conv_net=None):
         model = Dense(num_classes, activation='softmax')(model)
         model = Model(input=base_model.input,
                       output=model)
-
-    # cnn_model == VGG16
-    elif conv_net == 3:
-        base_model = VGG16(weights='imagenet',
-                           include_top=False,
-                           input_shape=(img_size, img_size, num_channels))
-        model = base_model.output
-        # model = GlobalAveragePooling2D()(model)
-        model = Flatten()(model)
-        model = Dense(num_classes, activation='softmax')(model)
-        model = Model(input=base_model.input,
-                      output=model)
-
     # cnn_model == InceptionV3(GoogleNet) from scratch
-    elif conv_net == 4:
+    elif conv_net == 3:
         model = InceptionV3(input_tensor=input_tensor,
                             weights=None,
                             include_top=True,
                             classes=num_classes)
     # cnn_model == ResNet from scratch
-    elif conv_net == 5:
+    elif conv_net == 4:
         model = ResNet50(input_tensor=input_tensor,
                          weights=None,
                          include_top=True,
@@ -140,7 +127,66 @@ def lr_schedule(epoch):
     return lr
 
 
-def training(filepath, use_data_aug=False, use_mixup=False, use_cutout=False):
+def data_aug(data_aug=None):
+    # Rotation
+    if data_aug == 1:
+        datagen = ImageDataGenerator(
+            rotation_range=60)  # randomly rotate images in the range (degrees, 0 to 180)
+    # Horizontal flip
+    elif data_aug == 2:
+        datagen = ImageDataGenerator(
+            horizontal_flip=True)  # randomly flip images
+    # Vertical flip
+    elif data_aug == 3:
+        datagen = ImageDataGenerator(
+            vertical_flip=True)  # randomly flip images
+    # Horizontal shift
+    elif data_aug == 4:
+        datagen = ImageDataGenerator(
+            height_shift_range=0.2)  # randomly shift images vertically (fraction of total height)
+    # Vertical shift
+    elif data_aug == 5:
+        datagen = ImageDataGenerator(
+            width_shift_range=0.2)  # randomly shift images horizontally (fraction of total width)
+
+    datagen.fit(x_train)
+    model.fit_generator(datagen.flow(x_train, y_train,
+                                     batch_size=batch_size),
+                        epochs=num_epochs,
+                        validation_data=(x_test, y_test),
+                        shuffle=True,
+                        callbacks=callbacks)
+
+
+def advanced_data_aug(data_aug=None):
+    # Apply mix-up
+    if data_aug == 6:
+        datagen = ImageDataGenerator()
+        training_generator = MixupGenerator(x_train, y_train,
+                                            batch_size=batch_size,
+                                            alpha=0.2,
+                                            datagen=datagen)()
+        model.fit_generator(generator=training_generator,
+                            epochs=num_epochs,
+                            steps_per_epoch=x_train.shape[0] // batch_size,
+                            validation_data=(x_test, y_test),
+                            shuffle=True,
+                            callbacks=callbacks)
+    # Apply cut_out
+    elif data_aug == 7:
+        datagen = ImageDataGenerator(preprocessing_function=get_random_cutout(v_l=0, v_h=1, pixel_level=False),
+                                     vertical_flip=False,
+                                     height_shift_range=0)
+        datagen.fit(x_train)
+        model.fit_generator(generator=datagen.flow(x_train, y_train,
+                                                   batch_size=batch_size),
+                            epochs=num_epochs,
+                            validation_data=(x_test, y_test),
+                            shuffle=True,
+                            callbacks=callbacks)
+
+
+def training(filepath, conv_net=None, use_data_aug=None):
     # Load the training and test data
     x_train, y_train = load_data(train=True)
     x_test, y_test = load_data(train=False)
@@ -154,11 +200,17 @@ def training(filepath, use_data_aug=False, use_mixup=False, use_cutout=False):
     # ConvNet models:
     # (cnn_model = 1) == ResNet50 with pre-trained weights
     # (cnn_model = 2) == Inception v3 (GoogleNet) with pre-trained weights
-    # (cnn_model = 3) == VGG16
-    # (cnn_model = 4) == Inception v3 (GoogleNet) from scratch
-    # (cnn_model = 5) == ResNet50 from scratch
+    # (cnn_model = 3) == Inception v3 (GoogleNet) from scratch
+    # (cnn_model = 4) == ResNet50 from scratch
 
-    model = cnn_model(x_train, conv_net=4)
+    if conv_net == 1:
+        model = cnn_model(x_train, conv_net=1)
+    elif conv_net == 2:
+        model = cnn_model(x_train, conv_net=2)
+    elif conv_net == 3:
+        model = cnn_model(x_train, conv_net=3)
+    elif conv_net == 4:
+        model = cnn_model(x_train, conv_net=4)
 
     checkpoint = ModelCheckpoint(filepath=filepath,
                                  monitor='val_acc',
@@ -167,64 +219,14 @@ def training(filepath, use_data_aug=False, use_mixup=False, use_cutout=False):
 
     lr_scheduler = LearningRateScheduler(lr_schedule)
 
-    # Currently not in use
-    # lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1),
-    #                                cooldown=0,
-    #                                patience=5,
-    #                                min_lr=0.5e-6)
-
     callbacks = [checkpoint, lr_scheduler, tensorboard]
 
-    if use_mixup:
-        datagen = ImageDataGenerator()
-        training_generator = MixupGenerator(x_train, y_train,
-                                            batch_size=batch_size,
-                                            alpha=0.2,
-                                            datagen=datagen)()
-        model.fit_generator(generator=training_generator,
-                            epochs=num_epochs,
-                            steps_per_epoch=x_train.shape[0] // batch_size,
-                            validation_data=(x_test, y_test),
-                            shuffle=True,
-                            callbacks=callbacks)
-    elif use_cutout:
-        datagen = ImageDataGenerator(preprocessing_function=get_random_cutout(v_l=0, v_h=1, pixel_level=False),
-                                     vertical_flip=False,
-                                     height_shift_range=0)
-        datagen.fit(x_train)
-        model.fit_generator(generator=datagen.flow(x_train, y_train,
-                                                   batch_size=batch_size),
-                            epochs=num_epochs,
-                            validation_data=(x_test, y_test),
-                            shuffle=True,
-                            callbacks=callbacks)
-    # Rotation
-    elif use_data_aug == 1:
-        datagen = ImageDataGenerator(
-            rotation_range=60)  # randomly rotate images in the range (degrees, 0 to 180)
-    # Horizontal flip
-    elif use_data_aug == 2:
-        datagen = ImageDataGenerator(
-            horizontal_flip=True)  # randomly flip images
-    # Vertical flip
-    elif use_data_aug == 3:
-        datagen = ImageDataGenerator(
-            vertical_flip=True)  # randomly flip images
-    # Horizontal shift
-    elif use_data_aug == 4:
-        datagen = ImageDataGenerator(
-            height_shift_range=0)  # randomly shift images vertically (fraction of total height)
-    # Vertical shift
-    elif use_data_aug == 5:
-        datagen = ImageDataGenerator(
-            width_shift_range=0.2)  # randomly shift images horizontally (fraction of total width)
-        datagen.fit(x_train)
-        model.fit_generator(datagen.flow(x_train, y_train,
-                                         batch_size=batch_size),
-                            epochs=num_epochs,
-                            validation_data=(x_test, y_test),
-                            shuffle=True,
-                            callbacks=callbacks)
+    # Apply traditional data augmentation
+    if use_data_aug < 6:
+        data_aug(data_aug=use_data_aug)
+    elif use_data_aug > 5:
+        advanced_data_aug(data_aug=use_data_aug)
+
     # No data augmentation
     else:
         model.fit(x_train, y_train,
@@ -244,7 +246,7 @@ def evaluate(filepath):
     print('Test accuracy:', scores[1])
 
 
-def main(filepath, experiment):
+def main(filepath, conv_nets, data_aug):
     """
     Main function to run convolutional neural network
     """
@@ -258,6 +260,8 @@ def main(filepath, experiment):
     k.tensorflow_backend.set_session(tf.Session(config=config))
 
     print(filepath)
+    print(conv_nets)
+    print(data_aug)
 
     # Instantiate the training with chosen setting
     # training(filepath='./models/comb/googlenet_vertflip_vertshift_scratch.h5',
@@ -266,14 +270,14 @@ def main(filepath, experiment):
     #          use_cutout=False)
 
     training(filepath=filepath,
-             use_data_aug=True,
-             use_mixup=False,
-             use_cutout=False)
+             conv_net=conv_nets,
+             use_data_aug=data_aug)
     # Evaluate model on test data once, without any augmentation
     # evaluate(filepath='./models/exp2/single/googlenet_vertflip_vertshift_scratch.h5')
 
 
 if __name__ == '__main__':
     filepath = sys.argv[1]
+    conv_nets = sys.argv[2]
+    data_aug = sys.argv[3]
     main(filepath=filepath)
-
