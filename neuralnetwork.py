@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+import sys
 
 import tensorflow as tf
 import keras
@@ -230,7 +231,7 @@ def evaluate(filepath):
     print('Test accuracy:', scores[1])
 
 
-def main():
+def main(filepath):
     """
     Main function to run convolutional neural network
     """
@@ -249,9 +250,15 @@ def main():
     #          use_mixup=False,
     #          use_cutout=False)
 
+    training(filepath=filepath,
+             use_data_aug=True,
+             use_mixup=False,
+             use_cutout=False)
     # Evaluate model on test data once, without any augmentation
     evaluate(filepath='./models/comb/googlenet_vertflip_vertshift_scratch.h5')
 
 
 if __name__ == '__main__':
-    main()
+    filepath = sys.argv[1]
+    main(filepath=filepath)
+
