@@ -128,6 +128,14 @@ def lr_schedule(epoch):
 
 
 def data_aug(data_aug=None):
+    # No data augmentation
+    if data_aug == 0:
+        model.fit(x_train, y_train,
+                  batch_size=batch_size,
+                  epochs=num_epochs,
+                  validation_data=(x_test, y_test),
+                  shuffle=True,
+                  callbacks=callbacks)
     # Rotation
     if data_aug == 1:
         datagen = ImageDataGenerator(
@@ -197,12 +205,6 @@ def training(filepath, conv_net=None, use_data_aug=None):
                               write_graph=True,
                               write_images=False)
 
-    # ConvNet models:
-    # (cnn_model = 1) == ResNet50 with pre-trained weights
-    # (cnn_model = 2) == Inception v3 (GoogleNet) with pre-trained weights
-    # (cnn_model = 3) == Inception v3 (GoogleNet) from scratch
-    # (cnn_model = 4) == ResNet50 from scratch
-
     if conv_net == 1:
         model = cnn_model(x_train, conv_net=1)
     elif conv_net == 2:
@@ -226,15 +228,6 @@ def training(filepath, conv_net=None, use_data_aug=None):
         data_aug(data_aug=use_data_aug)
     elif use_data_aug > 5:
         advanced_data_aug(data_aug=use_data_aug)
-
-    # No data augmentation
-    else:
-        model.fit(x_train, y_train,
-                  batch_size=batch_size,
-                  epochs=num_epochs,
-                  validation_data=(x_test, y_test),
-                  shuffle=True,
-                  callbacks=callbacks)
 
 
 def evaluate(filepath):
@@ -269,9 +262,18 @@ def main(filepath, conv_nets, data_aug):
     #          use_mixup=False,
     #          use_cutout=False)
 
+    # ConvNet models:
+    # (cnn_model = 1) == ResNet50 with pre-trained weights
+    # (cnn_model = 2) == Inception v3 (GoogleNet) with pre-trained weights
+    # (cnn_model = 3) == Inception v3 (GoogleNet) from scratch
+    # (cnn_model = 4) == ResNet50 from scratch
+
+    filepath = "./models/exp2/single/" + filepath
+
     training(filepath=filepath,
              conv_net=conv_nets,
              use_data_aug=data_aug)
+
     # Evaluate model on test data once, without any augmentation
     # evaluate(filepath='./models/exp2/single/googlenet_vertflip_vertshift_scratch.h5')
 
