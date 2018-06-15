@@ -31,8 +31,8 @@ batch_size = 20 # 20 standard
 num_epochs = 50
 
 # Dataset
-train_dir = './dataset_tropic/train'
-test_dir = './dataset_tropic/test'
+train_dir = './dataset_tropic/exp2/train'
+test_dir = './dataset_tropic/exp2/test'
 
 
 def load_data(train=True, subtract_pixel_mean=True):
@@ -198,13 +198,26 @@ def training(filepath, use_data_aug=False, use_mixup=False, use_cutout=False):
                             validation_data=(x_test, y_test),
                             shuffle=True,
                             callbacks=callbacks)
-    elif use_data_aug:
+    # Rotation
+    elif use_data_aug == 1:
         datagen = ImageDataGenerator(
-            rotation_range=0,  # randomly rotate images in the range (degrees, 0 to 180)
-            width_shift_range=0.2,  # randomly shift images horizontally (fraction of total width)
-            height_shift_range=0,  # randomly shift images vertically (fraction of total height)
-            horizontal_flip=False,  # randomly flip images
+            rotation_range=60)  # randomly rotate images in the range (degrees, 0 to 180)
+    # Horizontal flip
+    elif use_data_aug == 2:
+        datagen = ImageDataGenerator(
+            horizontal_flip=True)  # randomly flip images
+    # Vertical flip
+    elif use_data_aug == 3:
+        datagen = ImageDataGenerator(
             vertical_flip=True)  # randomly flip images
+    # Horizontal shift
+    elif use_data_aug == 4:
+        datagen = ImageDataGenerator(
+            height_shift_range=0)  # randomly shift images vertically (fraction of total height)
+    # Vertical shift
+    elif use_data_aug == 5:
+        datagen = ImageDataGenerator(
+            width_shift_range=0.2)  # randomly shift images horizontally (fraction of total width)
         datagen.fit(x_train)
         model.fit_generator(datagen.flow(x_train, y_train,
                                          batch_size=batch_size),
@@ -231,7 +244,7 @@ def evaluate(filepath):
     print('Test accuracy:', scores[1])
 
 
-def main(filepath):
+def main(filepath, experiment):
     """
     Main function to run convolutional neural network
     """
@@ -244,6 +257,8 @@ def main(filepath):
 
     k.tensorflow_backend.set_session(tf.Session(config=config))
 
+    print(filepath)
+
     # Instantiate the training with chosen setting
     # training(filepath='./models/comb/googlenet_vertflip_vertshift_scratch.h5',
     #          use_data_aug=True,
@@ -255,7 +270,7 @@ def main(filepath):
              use_mixup=False,
              use_cutout=False)
     # Evaluate model on test data once, without any augmentation
-    evaluate(filepath='./models/comb/googlenet_vertflip_vertshift_scratch.h5')
+    # evaluate(filepath='./models/exp2/single/googlenet_vertflip_vertshift_scratch.h5')
 
 
 if __name__ == '__main__':
