@@ -127,7 +127,7 @@ def lr_schedule(epoch):
     return lr
 
 
-def data_aug(callbacks, model, x_test, y_test, data_aug=None):
+def use_data_aug(callbacks, model, x_train, y_train, x_test, y_test, data_aug=None):
     # No data augmentation
     if data_aug == 0:
         model.fit(x_train, y_train,
@@ -137,7 +137,7 @@ def data_aug(callbacks, model, x_test, y_test, data_aug=None):
                   shuffle=True,
                   callbacks=callbacks)
     # Rotation
-    if data_aug == 1:
+    elif data_aug == 1:
         datagen = ImageDataGenerator(
             rotation_range=60)  # randomly rotate images in the range (degrees, 0 to 180)
     # Horizontal flip
@@ -166,7 +166,7 @@ def data_aug(callbacks, model, x_test, y_test, data_aug=None):
                         callbacks=callbacks)
 
 
-def advanced_data_aug(callbacks, model, x_test, y_test, data_aug=None):
+def advanced_data_aug(callbacks, model, x_train, y_train, x_test, y_test, data_aug=None):
     # Apply mix-up
     if data_aug == 6:
         datagen = ImageDataGenerator()
@@ -194,7 +194,7 @@ def advanced_data_aug(callbacks, model, x_test, y_test, data_aug=None):
                             callbacks=callbacks)
 
 
-def training(filepath, conv_net=None, use_data_aug=None):
+def training(filepath, conv_net=None, data_aug=None):
     # Load the training and test data
     x_train, y_train = load_data(train=True)
     x_test, y_test = load_data(train=False)
@@ -204,6 +204,9 @@ def training(filepath, conv_net=None, use_data_aug=None):
                               histogram_freq=0,
                               write_graph=True,
                               write_images=False)
+
+    conv_net = int(conv_net)
+    data_aug = int(data_aug)
 
     if conv_net == 1:
         model = cnn_model(x_train, conv_net=1)
@@ -224,16 +227,20 @@ def training(filepath, conv_net=None, use_data_aug=None):
     callbacks = [checkpoint, lr_scheduler, tensorboard]
 
     # Apply traditional data augmentation
-    if use_data_aug < 6:
-        data_aug(callbacks=callbacks,
+    if data_aug < 6:
+        use_data_aug(callbacks=callbacks,
                  model=model,
                  data_aug=use_data_aug,
+                 x_train=x_train,
+                 y_train=y_train,
                  x_test=x_test,
                  y_test=y_test)
-    elif use_data_aug > 5:
+    elif data_aug > 5:
         advanced_data_aug(callbacks=callbacks,
                           model=model,
                           data_aug=use_data_aug,
+                          x_train=x_train,
+                          y_train=y_train,
                           x_test=x_test,
                           y_test=y_test)
 
@@ -247,7 +254,7 @@ def evaluate(filepath):
     print('Test accuracy:', scores[1])
 
 
-def main(filepath, conv_nets, data_aug):
+def main(filepath, conv_net, data_aug):
     """
     Main function to run convolutional neural network
     """
@@ -261,7 +268,7 @@ def main(filepath, conv_nets, data_aug):
     k.tensorflow_backend.set_session(tf.Session(config=config))
 
     print(filepath)
-    print(conv_nets)
+    print(conv_net)
     print(data_aug)
 
     # Instantiate the training with chosen setting
@@ -270,17 +277,27 @@ def main(filepath, conv_nets, data_aug):
     #          use_mixup=False,
     #          use_cutout=False)
 
+    filepath = "./models/exp2/single/" + filepath
+
     # ConvNet models:
     # (cnn_model = 1) == ResNet50 with pre-trained weights
     # (cnn_model = 2) == Inception v3 (GoogleNet) with pre-trained weights
     # (cnn_model = 3) == Inception v3 (GoogleNet) from scratch
     # (cnn_model = 4) == ResNet50 from scratch
 
-    filepath = "./models/exp2/single/" + filepath
+    # Data augmentation:
+    # (data_aug = 0) == No data augmentation
+    # (data_aug = 1) == Rotation
+    # (data_aug = 2) == Horizontal flip
+    # (data_aug = 3) == Vertical flip
+    # (data_aug = 4) == Horizontal shift
+    # (data_aug = 5) == Vertical shift
+    # (data_aug = 6) == Mix-up
+    # (data_aug = 7) == Cutout
 
     training(filepath=filepath,
-             conv_net=conv_nets,
-             use_data_aug=data_aug)
+             conv_net=conv_net,
+             data_aug=data_aug)
 
     # Evaluate model on test data once, without any augmentation
     # evaluate(filepath='./models/exp2/single/googlenet_vertflip_vertshift_scratch.h5')
@@ -288,6 +305,6 @@ def main(filepath, conv_nets, data_aug):
 
 if __name__ == '__main__':
     filepath = sys.argv[1]
-    conv_nets = sys.argv[2]
+    conv_net = sys.argv[2]
     data_aug = sys.argv[3]
-    main(filepath=filepath)
+    main(filepath=filepath, conv_net=conv_net, data_aug=data_aug)
