@@ -256,7 +256,7 @@ def evaluate(filepath):
     print('Test accuracy:', scores[1])
 
 
-def main(filepath, conv_net, data_aug):
+def main(filepath):
     """
     Main function to run convolutional neural network
     """
@@ -270,8 +270,8 @@ def main(filepath, conv_net, data_aug):
     k.tensorflow_backend.set_session(tf.Session(config=config))
 
     print(filepath)
-    print(conv_net)
-    print(data_aug)
+    # print(conv_net)
+    # print(data_aug)
 
     # Instantiate the training with chosen setting
     # training(filepath='./models/comb/googlenet_vertflip_vertshift_scratch.h5',
@@ -297,16 +297,20 @@ def main(filepath, conv_net, data_aug):
     # (data_aug = 7) == Cutout
     # (data_agu = 8) == No data augmentation
 
-    training(filepath=filepath,
-             conv_net=conv_net,
-             data_aug=data_aug)
+    # training(filepath=filepath,
+    #          conv_net=conv_net,
+    #          data_aug=data_aug)
 
     # Evaluate model on test data once, without any augmentation
     # evaluate(filepath='./models/exp3/single/3googlenet_cutout_pre.h5')
 
+    evaluate(filepath=filepath)
+
 
 if __name__ == '__main__':
     filepath = sys.argv[1]
-    conv_net = sys.argv[2]
-    data_aug = sys.argv[3]
-    main(filepath=filepath, conv_net=conv_net, data_aug=data_aug)
+    # conv_net = sys.argv[2]
+    # data_aug = sys.argv[3]
+    main(filepath=filepath)
+         # conv_net=conv_net,
+         # data_aug=data_aug)
