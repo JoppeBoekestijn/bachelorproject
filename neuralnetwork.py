@@ -31,8 +31,8 @@ batch_size = 20  # 20 standard
 num_epochs = 50
 
 # Dataset
-train_dir = './dataset_tropic/exp2/train'
-test_dir = './dataset_tropic/exp2/test'
+train_dir = './dataset_tropic/exp3/train'
+test_dir = './dataset_tropic/exp3/test'
 
 
 def load_data(train=True, subtract_pixel_mean=True):
@@ -140,14 +140,16 @@ def use_data_aug(callbacks, model, x_train, y_train, x_test, y_test, data_aug=No
     elif data_aug == 3:
         datagen = ImageDataGenerator(
             vertical_flip=True)  # randomly flip images
-    # Horizontal shift
+    # Horizontal shift + horizontal flip
     elif data_aug == 4:
         datagen = ImageDataGenerator(
-            height_shift_range=0.2)  # randomly shift images vertically (fraction of total height)
-    # Vertical shift
+            height_shift_range=0.2,
+            horizontal_flip=True)  # randomly shift images vertically (fraction of total height)
+    # Vertical shift + vertical flip
     elif data_aug == 5:
         datagen = ImageDataGenerator(
-            width_shift_range=0.2)  # randomly shift images horizontally (fraction of total width)
+            width_shift_range=0.2,
+            vertical_flip=True)  # randomly shift images horizontally (fraction of total width)
 
     datagen.fit(x_train)
     model.fit_generator(datagen.flow(x_train, y_train,
@@ -172,11 +174,11 @@ def advanced_data_aug(callbacks, model, x_train, y_train, x_test, y_test, data_a
                             validation_data=(x_test, y_test),
                             shuffle=True,
                             callbacks=callbacks)
-    # Apply cut_out
+    # Apply cut_out + vertical flip + horizontal shift
     elif data_aug == 7:
         datagen = ImageDataGenerator(preprocessing_function=get_random_cutout(v_l=0, v_h=1, pixel_level=False),
-                                     vertical_flip=False,
-                                     height_shift_range=0)
+                                     vertical_flip=True,
+                                     height_shift_range=0.2)
         datagen.fit(x_train)
         model.fit_generator(generator=datagen.flow(x_train, y_train,
                                                    batch_size=batch_size),
@@ -229,12 +231,12 @@ def training(filepath, conv_net=None, data_aug=None):
     # Apply traditional data augmentation
     if data_aug < 6:
         use_data_aug(callbacks=callbacks,
-                 model=model,
-                 data_aug=data_aug,
-                 x_train=x_train,
-                 y_train=y_train,
-                 x_test=x_test,
-                 y_test=y_test)
+                     model=model,
+                     data_aug=data_aug,
+                     x_train=x_train,
+                     y_train=y_train,
+                     x_test=x_test,
+                     y_test=y_test)
     elif data_aug > 5:
         advanced_data_aug(callbacks=callbacks,
                           model=model,
@@ -277,7 +279,7 @@ def main(filepath, conv_net, data_aug):
     #          use_mixup=False,
     #          use_cutout=False)
 
-    filepath = "./models/exp2/single/" + filepath
+    filepath = "./models/exp3/comb/" + filepath
 
     # ConvNet models:
     # (cnn_model = 1) == ResNet50 with pre-trained weights
@@ -286,7 +288,6 @@ def main(filepath, conv_net, data_aug):
     # (cnn_model = 4) == ResNet50 from scratch
 
     # Data augmentation:
-    # (data_aug = 0) == No data augmentation
     # (data_aug = 1) == Rotation
     # (data_aug = 2) == Horizontal flip
     # (data_aug = 3) == Vertical flip
@@ -294,13 +295,14 @@ def main(filepath, conv_net, data_aug):
     # (data_aug = 5) == Vertical shift
     # (data_aug = 6) == Mix-up
     # (data_aug = 7) == Cutout
+    # (data_agu = 8) == No data augmentation
 
     training(filepath=filepath,
              conv_net=conv_net,
              data_aug=data_aug)
 
     # Evaluate model on test data once, without any augmentation
-    # evaluate(filepath='./models/exp2/single/googlenet_vertflip_vertshift_scratch.h5')
+    # evaluate(filepath='./models/exp3/single/3googlenet_cutout_pre.h5')
 
 
 if __name__ == '__main__':
